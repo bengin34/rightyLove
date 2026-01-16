@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/authStore';
 // import { useCoupleStore } from '@/stores/coupleStore'; // TODO: use for pairing flow
 
 // DEV: Skip auth for easier testing
-const DEV_SKIP_AUTH = __DEV__ && true; // Set to false to test real auth flow
+const DEV_SKIP_AUTH = false; // Set to false to test real auth flow
 
 export default function Index() {
   const { isAuthenticated, onboarding, setUser, completeOnboarding } = useAuthStore();
