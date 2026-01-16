@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -27,7 +27,6 @@ import { usePhotoStore } from '@/stores/photoStore';
 import {
   pickImagesFromLibrary,
   likePhoto,
-  getDeckPhotos,
 } from '@/services/photo';
 import {
   sharePhoto,
@@ -46,7 +45,7 @@ export default function PhotoDeckScreen() {
   const todayLikedCount = usePhotoStore((state) => state.todayLikedCount);
   const todaySharedCount = usePhotoStore((state) => state.todaySharedCount);
 
-  const [deckPhotos, setDeckPhotos] = useState<Photo[]>([]);
+  const [deckOrder, setDeckOrder] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showHeart, setShowHeart] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -59,11 +58,37 @@ export default function PhotoDeckScreen() {
   const heartScale = useSharedValue(0);
   const leftSwipeMessageOpacity = useSharedValue(0);
 
-  // Initialize deck on mount
+  const lastIdsKeyRef = useRef('');
+
   useEffect(() => {
-    const photos = getDeckPhotos();
-    setDeckPhotos(photos);
+    const ids = storePhotos.map((photo) => photo.id);
+    const idsKey = [...ids].sort().join('|');
+
+    if (idsKey !== lastIdsKeyRef.current) {
+      lastIdsKeyRef.current = idsKey;
+      const shuffled = [...ids].sort(() => Math.random() - 0.5);
+      setDeckOrder(shuffled);
+      setCurrentIndex((prev) => Math.min(prev, Math.max(shuffled.length - 1, 0)));
+    }
   }, [storePhotos]);
+
+  const deckPhotos = useMemo(() => {
+    const photoById = new Map(storePhotos.map((photo) => [photo.id, photo]));
+    return deckOrder
+      .map((id) => photoById.get(id))
+      .filter((photo): photo is Photo => !!photo);
+  }, [deckOrder, storePhotos]);
+
+  useEffect(() => {
+    if (deckPhotos.length === 0 && currentIndex !== 0) {
+      setCurrentIndex(0);
+      return;
+    }
+
+    if (currentIndex >= deckPhotos.length && deckPhotos.length > 0) {
+      setCurrentIndex(deckPhotos.length - 1);
+    }
+  }, [deckPhotos.length, currentIndex]);
 
   const handleAddPhotos = useCallback(async () => {
     setIsLoading(true);

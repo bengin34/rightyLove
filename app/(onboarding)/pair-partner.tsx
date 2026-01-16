@@ -1,21 +1,77 @@
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Share } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Share, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
+import { useCouple } from '@/hooks/useCouple';
+import { getCurrentCouple } from '@/services/couple';
 
 type Mode = 'create' | 'join';
 
 export default function PairPartnerScreen() {
   const [mode, setMode] = useState<Mode>('create');
-  const [inviteCode, setInviteCode] = useState('ABC123'); // TODO: Generate from server
   const [joinCode, setJoinCode] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const {
+    couple,
+    inviteCode,
+    isLoading,
+    isCoupleFull,
+    createCouple,
+    joinCouple,
+  } = useCouple();
+
+  useEffect(() => {
+    setErrorMessage(null);
+  }, [mode]);
+
+  useEffect(() => {
+    if (mode !== 'create') return;
+    if (!inviteCode || isCoupleFull) return;
+
+    let isActive = true;
+    const pollCouple = async () => {
+      const result = await getCurrentCouple();
+      if (!isActive) return;
+      if (result?.memberB) {
+        return;
+      }
+    };
+
+    pollCouple();
+    const interval = setInterval(pollCouple, 4000);
+
+    return () => {
+      isActive = false;
+      clearInterval(interval);
+    };
+  }, [mode, inviteCode, isCoupleFull]);
 
   const handleShare = async () => {
     try {
+      if (isCoupleFull) {
+        Alert.alert('Already connected', 'You are already paired with your partner.');
+        return;
+      }
+
+      let codeToShare = inviteCode;
+      if (!codeToShare) {
+        const result = await createCouple();
+        if (!result.success) {
+          setErrorMessage(result.error || 'Failed to create invite code');
+          return;
+        }
+        codeToShare = result.couple?.inviteCode || null;
+      }
+
+      if (!codeToShare) {
+        setErrorMessage('Invite code is not ready yet. Please try again.');
+        return;
+      }
+
       await Share.share({
-        message: `Join me on RightyLove! 💕\n\nUse this code to connect: ${inviteCode}\n\nOr download the app: https://rightylove.app`,
+        message: `Join me on RightyLove! 💕\n\nUse this code to connect: ${codeToShare}\n\nOr download the app: https://rightylove.app`,
       });
     } catch (error) {
       console.error('Error sharing:', error);
@@ -23,13 +79,21 @@ export default function PairPartnerScreen() {
   };
 
   const handleJoin = async () => {
-    if (joinCode.length < 6) return;
-    setIsLoading(true);
-    // TODO: Validate code with server and join couple
-    setTimeout(() => {
-      setIsLoading(false);
-      router.replace('/(tabs)');
-    }, 1500);
+    const cleanedCode = joinCode.trim();
+    if (cleanedCode.length < 6) return;
+    if (isCoupleFull) {
+      Alert.alert('Already connected', 'You are already paired with your partner.');
+      return;
+    }
+
+    setErrorMessage(null);
+    const result = await joinCouple(cleanedCode);
+    if (!result.success) {
+      setErrorMessage(result.error || 'Failed to join partner');
+      return;
+    }
+
+    router.replace('/(tabs)');
   };
 
   const handleSkip = () => {
@@ -38,7 +102,23 @@ export default function PairPartnerScreen() {
   };
 
   const handleCreateAndContinue = () => {
-    // TODO: Create couple on server
+    if (isLoading) return;
+    if (isCoupleFull) {
+      router.replace('/(tabs)');
+      return;
+    }
+
+    if (!couple) {
+      createCouple().then((result) => {
+        if (!result.success) {
+          setErrorMessage(result.error || 'Failed to create invite code');
+          return;
+        }
+        router.replace('/(tabs)');
+      });
+      return;
+    }
+
     router.replace('/(tabs)');
   };
 
@@ -76,21 +156,36 @@ export default function PairPartnerScreen() {
         {mode === 'create' ? (
           <View style={styles.createSection}>
             <View style={styles.qrContainer}>
-              <QRCode
-                value={`rightylove://join/${inviteCode}`}
-                size={180}
-                color="#FF6B9D"
-                backgroundColor="#FFFFFF"
-              />
+              {inviteCode ? (
+                <QRCode
+                  value={`rightylove://join/${inviteCode}`}
+                  size={180}
+                  color="#FF6B9D"
+                  backgroundColor="#FFFFFF"
+                />
+              ) : (
+                <Text style={styles.codeLoading}>Generate an invite code to share</Text>
+              )}
             </View>
             <Text style={styles.codeLabel}>Your invite code</Text>
-            <Text style={styles.codeValue}>{inviteCode}</Text>
-            <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
-              <Text style={styles.shareButtonText}>Share with Partner</Text>
+            <Text style={styles.codeValue}>{inviteCode || '------'}</Text>
+            <TouchableOpacity
+              style={[styles.shareButton, isCoupleFull && styles.shareButtonDisabled]}
+              onPress={handleShare}
+              disabled={isCoupleFull || isLoading}
+            >
+              <Text style={styles.shareButtonText}>
+                {inviteCode ? 'Share with Partner' : 'Generate Invite Code'}
+              </Text>
             </TouchableOpacity>
             <Text style={styles.shareHint}>
               Your partner can scan the QR code or enter the code above
             </Text>
+            {inviteCode && (
+              <Text style={styles.pairStatusText}>
+                {isCoupleFull ? 'Partner connected!' : 'Waiting for your partner to join...'}
+              </Text>
+            )}
           </View>
         ) : (
           <View style={styles.joinSection}>
@@ -98,7 +193,7 @@ export default function PairPartnerScreen() {
             <TextInput
               style={styles.codeInput}
               value={joinCode}
-              onChangeText={setJoinCode}
+              onChangeText={(text) => setJoinCode(text.toUpperCase())}
               placeholder="ABC123"
               placeholderTextColor="#9CA3AF"
               autoCapitalize="characters"
@@ -129,6 +224,7 @@ export default function PairPartnerScreen() {
         <TouchableOpacity onPress={handleSkip}>
           <Text style={styles.skipText}>I'll pair later</Text>
         </TouchableOpacity>
+        {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
         <Text style={styles.hintText}>
           You can still use the app, but Daily Question requires a paired partner
         </Text>
@@ -196,6 +292,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  codeLoading: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
   codeLabel: {
     fontSize: 14,
     color: '#6B7280',
@@ -222,10 +323,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FF6B9D',
   },
+  shareButtonDisabled: {
+    opacity: 0.6,
+  },
   shareHint: {
     fontSize: 14,
     color: '#9CA3AF',
     textAlign: 'center',
+  },
+  pairStatusText: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginTop: 8,
   },
   joinSection: {
     alignItems: 'center',
@@ -287,6 +397,12 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize: 16,
     color: '#9CA3AF',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#EF4444',
     textAlign: 'center',
     marginBottom: 8,
   },

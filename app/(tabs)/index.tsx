@@ -127,6 +127,11 @@ export default function HomeScreen() {
           onPress={() => isPaired && router.push('/daily-question')}
           activeOpacity={isPaired ? 0.9 : 1}
         >
+          {isPaired && questionStatus !== 'unlocked' && (
+            <View style={styles.lockBadge}>
+              <Ionicons name="lock-closed" size={16} color="#8B5CF6" />
+            </View>
+          )}
           <View style={styles.cardHeader}>
             <View style={[styles.cardIcon, { backgroundColor: '#EDE9FE' }]}>
               <Ionicons name="chatbubbles" size={24} color="#8B5CF6" />
@@ -327,6 +332,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     marginBottom: 16,
+    position: 'relative',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -369,6 +375,14 @@ const styles = StyleSheet.create({
   },
   unlockedBadge: {
     backgroundColor: '#D1FAE5',
+    padding: 6,
+    borderRadius: 8,
+  },
+  lockBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: '#F3F4F6',
     padding: 6,
     borderRadius: 8,
   },

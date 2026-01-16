@@ -68,33 +68,15 @@ export async function joinCouple(
       return { success: false, error: 'Not authenticated' };
     }
 
-    // Find couple by invite code
-    const { data: existingCouple, error: findError } = await supabase
-      .from('couples')
-      .select()
-      .eq('invite_code', inviteCode.toUpperCase())
-      .is('member_b', null)
-      .single();
+    const { data, error } = await supabase.rpc('join_couple', {
+      p_invite_code: inviteCode.toUpperCase(),
+    });
 
-    if (findError || !existingCouple) {
-      return { success: false, error: 'Invalid or already used invite code' };
-    }
-
-    // Check if user is not joining their own couple
-    if (existingCouple.member_a === user.id) {
-      return { success: false, error: 'You cannot join your own couple' };
-    }
-
-    // Update the couple with member_b
-    const { data, error: updateError } = await supabase
-      .from('couples')
-      .update({ member_b: user.id })
-      .eq('id', existingCouple.id)
-      .select()
-      .single();
-
-    if (updateError) {
-      return { success: false, error: updateError.message };
+    if (error || !data) {
+      return {
+        success: false,
+        error: error?.message || 'Invalid or already used invite code',
+      };
     }
 
     const couple: Couple = {
@@ -128,7 +110,15 @@ export async function getCurrentCouple(): Promise<Couple | null> {
       .or(`member_a.eq.${user.id},member_b.eq.${user.id}`)
       .single();
 
-    if (error || !data) {
+    if (error) {
+      if (error.code === 'PGRST116') {
+        useCoupleStore.getState().unpair();
+      }
+      return null;
+    }
+
+    if (!data) {
+      useCoupleStore.getState().unpair();
       return null;
     }
 

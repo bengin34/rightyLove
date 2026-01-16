@@ -1,5 +1,6 @@
 import * as Sharing from 'expo-sharing';
 import * as Linking from 'expo-linking';
+import { Share } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { File } from 'expo-file-system';
 import { markPhotoAsShared } from './photo';
@@ -181,7 +182,16 @@ export async function shareAnswerHighlight(
 
   message += '\n\n#RightyLove';
 
-  return openWhatsAppWithMessage(message);
+  try {
+    await Share.share({
+      message,
+      title: 'Share Highlight',
+    });
+    return { success: true };
+  } catch (err) {
+    console.error('Error sharing highlight:', err);
+    return { success: false, error: 'Failed to share highlight' };
+  }
 }
 
 // Share weekly recap

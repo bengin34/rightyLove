@@ -7,6 +7,10 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 export default function NotificationTimeScreen() {
   const [time, setTime] = useState(new Date(2024, 0, 1, 9, 0)); // Default 9:00 AM
   const [showPicker, setShowPicker] = useState(Platform.OS === 'ios');
+  const iosPickerProps =
+    Platform.OS === 'ios'
+      ? { textColor: '#111827', themeVariant: 'light' as const }
+      : {};
 
   const presetTimes = [
     { label: 'Morning', time: '9:00 AM', hour: 9 },
@@ -91,6 +95,7 @@ export default function NotificationTimeScreen() {
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               onChange={handleTimeChange}
               style={styles.picker}
+              {...iosPickerProps}
             />
           )}
         </View>

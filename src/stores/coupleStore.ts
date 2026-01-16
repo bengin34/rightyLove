@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { zustandStorage } from '@/lib/storage';
+import { useAuthStore } from '@/stores/authStore';
 import type { Couple } from '@/types';
 
 interface CoupleStore {
@@ -30,15 +31,18 @@ export const useCoupleStore = create<CoupleStore>()(
 
       // Actions
       setCouple: (couple) => {
-        const currentUserId = ''; // Will be obtained from authStore
+        const currentUserId = useAuthStore.getState().user?.id || '';
+        const partnerId =
+          couple && currentUserId
+            ? couple.memberA === currentUserId
+              ? couple.memberB || null
+              : couple.memberA
+            : null;
         set({
           couple,
-          isPaired: !!couple,
-          partnerId: couple
-            ? couple.memberA === currentUserId
-              ? couple.memberB
-              : couple.memberA
-            : null,
+          isPaired: !!(couple && couple.memberB),
+          partnerId,
+          inviteCode: couple?.inviteCode ?? null,
         });
       },
 
@@ -51,6 +55,7 @@ export const useCoupleStore = create<CoupleStore>()(
           couple: null,
           partnerId: null,
           isPaired: false,
+          inviteCode: null,
         }),
     }),
     {
