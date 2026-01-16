@@ -20,6 +20,8 @@ interface PhotoStore {
   advanceDeck: () => void;
   resetDeck: () => void;
   resetDailyCounters: () => void;
+  getWeeklyStats: () => { liked: number; shared: number };
+  getTotalCount: () => number;
 }
 
 const getTodayKey = () => new Date().toISOString().split('T')[0];
@@ -79,6 +81,31 @@ export const usePhotoStore = create<PhotoStore>()(
           todayLikedCount: 0,
           todaySharedCount: 0,
         }),
+
+      getWeeklyStats: () => {
+        const photos = get().photos;
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+        monday.setHours(0, 0, 0, 0);
+
+        let liked = 0;
+        let shared = 0;
+
+        for (const photo of photos) {
+          if (photo.likedAt && new Date(photo.likedAt) >= monday) {
+            liked++;
+          }
+          if (photo.sharedAt && new Date(photo.sharedAt) >= monday) {
+            shared++;
+          }
+        }
+
+        return { liked, shared };
+      },
+
+      getTotalCount: () => get().photos.length,
     }),
     {
       name: 'photo-storage',

@@ -1,10 +1,41 @@
 import { MMKV } from 'react-native-mmkv';
 import { StateStorage } from 'zustand/middleware';
 
-// Create MMKV instance
-export const storage = new MMKV({
-  id: 'rightylove-storage',
-});
+type StorageLike = {
+  getString: (key: string) => string | undefined;
+  set: (key: string, value: string) => void;
+  delete: (key: string) => void;
+  clearAll: () => void;
+};
+
+function createStorage(): StorageLike {
+  try {
+    return new MMKV({ id: 'rightylove-storage' });
+  } catch (error) {
+    if (__DEV__) {
+      console.warn(
+        'MMKV unavailable (likely remote debugger). Falling back to in-memory storage.',
+        error
+      );
+    }
+    const memory = new Map<string, string>();
+    return {
+      getString: (key: string) => memory.get(key),
+      set: (key: string, value: string) => {
+        memory.set(key, value);
+      },
+      delete: (key: string) => {
+        memory.delete(key);
+      },
+      clearAll: () => {
+        memory.clear();
+      },
+    };
+  }
+}
+
+// Create MMKV instance (or fallback)
+export const storage: StorageLike = createStorage();
 
 // Zustand MMKV storage adapter
 export const zustandStorage: StateStorage = {

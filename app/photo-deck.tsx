@@ -1,66 +1,179 @@
-import { useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Image, Share } from 'react-native';
+import { useState, useCallback, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Alert,
+  Modal,
+} from 'react-native';
 import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import { Image } from 'expo-image';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
+  withSequence,
   runOnJS,
   interpolate,
 } from 'react-native-reanimated';
+
+import { usePhotoStore } from '@/stores/photoStore';
+import {
+  pickImagesFromLibrary,
+  likePhoto,
+  getDeckPhotos,
+} from '@/services/photo';
+import {
+  sharePhoto,
+  copyMessageToClipboard,
+  PHOTO_SHARE_TEMPLATES,
+} from '@/services/sharing';
+import type { Photo } from '@/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 48;
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
 
-type Photo = {
-  id: string;
-  uri: string;
-  createdAt: Date;
-};
-
-// Placeholder photos for demo
-const DEMO_PHOTOS: Photo[] = [
-  { id: '1', uri: 'https://picsum.photos/seed/1/400/600', createdAt: new Date() },
-  { id: '2', uri: 'https://picsum.photos/seed/2/400/600', createdAt: new Date() },
-  { id: '3', uri: 'https://picsum.photos/seed/3/400/600', createdAt: new Date() },
-  { id: '4', uri: 'https://picsum.photos/seed/4/400/600', createdAt: new Date() },
-  { id: '5', uri: 'https://picsum.photos/seed/5/400/600', createdAt: new Date() },
-];
-
 export default function PhotoDeckScreen() {
-  const [photos, setPhotos] = useState(DEMO_PHOTOS);
+  const insets = useSafeAreaInsets();
+  const storePhotos = usePhotoStore((state) => state.photos);
+  const todayLikedCount = usePhotoStore((state) => state.todayLikedCount);
+  const todaySharedCount = usePhotoStore((state) => state.todaySharedCount);
+
+  const [deckPhotos, setDeckPhotos] = useState<Photo[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showHeart, setShowHeart] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showCopiedFeedback, setShowCopiedFeedback] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const rotation = useSharedValue(0);
+  const heartScale = useSharedValue(0);
+  const leftSwipeMessageOpacity = useSharedValue(0);
 
-  const handleLike = useCallback(() => {
-    setShowHeart(true);
-    setTimeout(() => setShowHeart(false), 800);
-    // TODO: Log like event
-    setCurrentIndex((prev) => prev + 1);
+  // Initialize deck on mount
+  useEffect(() => {
+    const photos = getDeckPhotos();
+    setDeckPhotos(photos);
+  }, [storePhotos]);
+
+  const handleAddPhotos = useCallback(async () => {
+    setIsLoading(true);
+    const result = await pickImagesFromLibrary();
+    setIsLoading(false);
+
+    if (!result.success && result.error) {
+      Alert.alert('Error', result.error);
+    }
   }, []);
 
-  const handleShare = useCallback(async () => {
-    const photo = photos[currentIndex];
-    try {
-      await Share.share({
-        message: `Check out this memory! 💕\n\nFrom our RightyLove album`,
-        // url: photo.uri, // iOS only
-      });
-      // TODO: Log share event
-      setCurrentIndex((prev) => prev + 1);
-    } catch (error) {
-      console.error('Error sharing:', error);
+  const handleLike = useCallback(() => {
+    const photo = deckPhotos[currentIndex];
+    if (photo) {
+      likePhoto(photo.id);
     }
-  }, [currentIndex, photos]);
+
+    // Show heart animation
+    setShowHeart(true);
+    heartScale.value = withSequence(
+      withSpring(1.2, { damping: 10 }),
+      withSpring(1, { damping: 15 }),
+      withTiming(0, { duration: 300 })
+    );
+    setTimeout(() => setShowHeart(false), 800);
+
+    // Move to next card
+    setTimeout(() => {
+      setCurrentIndex((prev) => prev + 1);
+      translateX.value = 0;
+      translateY.value = 0;
+      rotation.value = 0;
+    }, 300);
+  }, [currentIndex, deckPhotos, heartScale, translateX, translateY, rotation]);
+
+  const handleShareStart = useCallback(() => {
+    // Reset card position before showing modal
+    translateX.value = 0;
+    translateY.value = 0;
+    rotation.value = 0;
+    setShowShareModal(true);
+  }, [translateX, translateY, rotation]);
+
+  const handleShareWithoutMessage = useCallback(async () => {
+    const photo = deckPhotos[currentIndex];
+    if (!photo) return;
+
+    // Close modal first
+    setShowShareModal(false);
+
+    // Wait for modal to fully dismiss, then open share sheet
+    setTimeout(async () => {
+      const result = await sharePhoto(photo.localUri, photo.id);
+
+      if (!result.success && result.error) {
+        Alert.alert('Error', result.error);
+        return;
+      }
+
+      // Move to next card after sharing
+      setTimeout(() => {
+        setCurrentIndex((prev) => prev + 1);
+        translateX.value = 0;
+        translateY.value = 0;
+        rotation.value = 0;
+      }, 300);
+    }, 400);
+  }, [deckPhotos, currentIndex, translateX, translateY, rotation]);
+
+  const handleShareWithTemplate = useCallback(
+    async (templateId: string) => {
+      const photo = deckPhotos[currentIndex];
+      const template = PHOTO_SHARE_TEMPLATES.find((t) => t.id === templateId);
+
+      if (!photo || !template) return;
+
+      // Copy message to clipboard first
+      await copyMessageToClipboard(template.message);
+
+      // Close modal
+      setShowShareModal(false);
+
+      // Show copied feedback
+      setShowCopiedFeedback(true);
+
+      // Wait for modal to fully dismiss and feedback to show, then open share sheet
+      setTimeout(async () => {
+        setShowCopiedFeedback(false);
+
+        // Small delay to ensure feedback modal is gone before share sheet opens
+        setTimeout(async () => {
+          const result = await sharePhoto(photo.localUri, photo.id);
+
+          if (!result.success && result.error) {
+            Alert.alert('Error', result.error);
+            return;
+          }
+
+          // Move to next card after sharing
+          setTimeout(() => {
+            setCurrentIndex((prev) => prev + 1);
+            translateX.value = 0;
+            translateY.value = 0;
+            rotation.value = 0;
+          }, 300);
+        }, 100);
+      }, 800);
+    },
+    [currentIndex, deckPhotos, translateX, translateY, rotation]
+  );
 
   const resetPosition = useCallback(() => {
     translateX.value = withSpring(0);
@@ -68,16 +181,44 @@ export default function PhotoDeckScreen() {
     rotation.value = withSpring(0);
   }, [translateX, translateY, rotation]);
 
+  const shakeCard = useCallback(() => {
+    translateX.value = withSequence(
+      withTiming(-10, { duration: 50 }),
+      withTiming(10, { duration: 50 }),
+      withTiming(-10, { duration: 50 }),
+      withTiming(10, { duration: 50 }),
+      withTiming(0, { duration: 50 })
+    );
+    rotation.value = withSequence(
+      withTiming(-2, { duration: 50 }),
+      withTiming(2, { duration: 50 }),
+      withTiming(-2, { duration: 50 }),
+      withTiming(2, { duration: 50 }),
+      withTiming(0, { duration: 50 })
+    );
+    leftSwipeMessageOpacity.value = withSequence(
+      withTiming(1, { duration: 150 }),
+      withTiming(1, { duration: 1500 }),
+      withTiming(0, { duration: 300 })
+    );
+  }, [translateX, rotation, leftSwipeMessageOpacity]);
+
   const gesture = Gesture.Pan()
     .onUpdate((event) => {
       // Only allow right and up swipes
       if (event.translationX < 0) {
-        // Left swipe - bounce back
-        translateX.value = event.translationX * 0.3;
+        // Left swipe - bounce back with resistance
+        translateX.value = event.translationX * 0.2;
       } else {
         translateX.value = event.translationX;
       }
-      translateY.value = event.translationY < 0 ? event.translationY : event.translationY * 0.3;
+
+      if (event.translationY < 0) {
+        translateY.value = event.translationY;
+      } else {
+        translateY.value = event.translationY * 0.2;
+      }
+
       rotation.value = event.translationX * 0.05;
     })
     .onEnd((event) => {
@@ -88,7 +229,10 @@ export default function PhotoDeckScreen() {
       } else if (event.translationY < -SWIPE_THRESHOLD) {
         // Up swipe - Share
         translateY.value = withTiming(-SCREEN_WIDTH, { duration: 300 });
-        runOnJS(handleShare)();
+        runOnJS(handleShareStart)();
+      } else if (event.translationX < -30) {
+        // Left swipe attempt - show cute message inside card
+        runOnJS(shakeCard)();
       } else {
         // Bounce back
         runOnJS(resetPosition)();
@@ -111,80 +255,185 @@ export default function PhotoDeckScreen() {
     opacity: interpolate(translateY.value, [0, -SWIPE_THRESHOLD], [0, 1]),
   }));
 
-  const isDeckEmpty = currentIndex >= photos.length;
+  const heartAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: heartScale.value }],
+    opacity: heartScale.value > 0 ? 1 : 0,
+  }));
+
+  const leftSwipeMessageStyle = useAnimatedStyle(() => ({
+    opacity: leftSwipeMessageOpacity.value,
+    transform: [{ scale: interpolate(leftSwipeMessageOpacity.value, [0, 1], [0.8, 1]) }],
+  }));
+
+  const isDeckEmpty = currentIndex >= deckPhotos.length;
+  const hasNoPhotos = storePhotos.length === 0;
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
-          <Ionicons name="close" size={28} color="#1F2937" />
+    <View style={styles.container}>
+      {/* Header with safe area */}
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
+          <View style={styles.headerButtonInner}>
+            <Ionicons name="close" size={24} color="#1F2937" />
+          </View>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Photo Deck</Text>
-        <TouchableOpacity style={styles.addButton}>
-          <Ionicons name="add" size={28} color="#FF6B9D" />
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={handleAddPhotos}
+          disabled={isLoading}
+        >
+          <View style={[styles.headerButtonInner, styles.addButtonInner]}>
+            <Ionicons name="add" size={24} color="#FF6B9D" />
+          </View>
         </TouchableOpacity>
+      </View>
+
+      {/* Stats bar */}
+      <View style={styles.statsBar}>
+        <View style={styles.statItem}>
+          <Ionicons name="heart" size={16} color="#FF6B9D" />
+          <Text style={styles.statText}>{todayLikedCount} liked today</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Ionicons name="share-social" size={16} color="#8B5CF6" />
+          <Text style={styles.statText}>{todaySharedCount} shared today</Text>
+        </View>
       </View>
 
       {/* Card Stack */}
       <View style={styles.cardContainer}>
-        {isDeckEmpty ? (
+        {hasNoPhotos ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>📷</Text>
+            <Text style={styles.emptyTitle}>No photos yet</Text>
+            <Text style={styles.emptyText}>
+              Add photos from your gallery to start building your "Us" album
+            </Text>
+            <TouchableOpacity
+              style={styles.addPhotosButton}
+              onPress={handleAddPhotos}
+              disabled={isLoading}
+            >
+              <Ionicons name="images" size={24} color="#FFFFFF" />
+              <Text style={styles.addPhotosText}>
+                {isLoading ? 'Adding...' : 'Add Photos'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : isDeckEmpty ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyEmoji}>✨</Text>
             <Text style={styles.emptyTitle}>All caught up!</Text>
             <Text style={styles.emptyText}>
-              You've swiped through all your photos today
+              You've swiped through all your photos today. Come back tomorrow for
+              more memories!
             </Text>
-            <TouchableOpacity style={styles.addPhotosButton}>
+            <TouchableOpacity
+              style={styles.addPhotosButton}
+              onPress={handleAddPhotos}
+              disabled={isLoading}
+            >
               <Ionicons name="add-circle" size={24} color="#FFFFFF" />
-              <Text style={styles.addPhotosText}>Add More Photos</Text>
+              <Text style={styles.addPhotosText}>
+                {isLoading ? 'Adding...' : 'Add More Photos'}
+              </Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
-            {/* Background cards */}
-            {photos.slice(currentIndex + 1, currentIndex + 3).reverse().map((photo, index) => (
-              <View
-                key={photo.id}
-                style={[
-                  styles.card,
-                  styles.backgroundCard,
-                  { transform: [{ scale: 0.95 - index * 0.05 }, { translateY: 10 + index * 10 }] },
-                ]}
-              >
-                <Image source={{ uri: photo.uri }} style={styles.cardImage} />
+            {/* Background cards - show up to 3 stacked behind */}
+            {deckPhotos
+              .slice(currentIndex + 1, currentIndex + 4)
+              .reverse()
+              .map((photo, reversedIndex) => {
+                const index = Math.min(2, deckPhotos.length - currentIndex - 2 - reversedIndex);
+                return (
+                  <View
+                    key={photo.id}
+                    style={[
+                      styles.card,
+                      styles.backgroundCard,
+                      {
+                        zIndex: -index - 1,
+                        transform: [
+                          { scale: 0.92 - index * 0.04 },
+                          { translateY: 12 + index * 14 },
+                        ],
+                        opacity: 0.9 - index * 0.15,
+                      },
+                    ]}
+                  >
+                    <Image
+                      source={{ uri: photo.localUri }}
+                      style={styles.cardImage}
+                      contentFit="cover"
+                      transition={200}
+                    />
+                  </View>
+                );
+              })}
+
+            {/* Remaining photos indicator */}
+            {deckPhotos.length - currentIndex > 1 && (
+              <View style={styles.remainingIndicator}>
+                <Text style={styles.remainingText}>
+                  +{deckPhotos.length - currentIndex - 1} more
+                </Text>
               </View>
-            ))}
+            )}
 
             {/* Top card (swipeable) */}
             <GestureDetector gesture={gesture}>
               <Animated.View style={[styles.card, cardStyle]}>
-                <Image source={{ uri: photos[currentIndex].uri }} style={styles.cardImage} />
+                <Image
+                  source={{ uri: deckPhotos[currentIndex].localUri }}
+                  style={styles.cardImage}
+                  contentFit="cover"
+                  transition={200}
+                />
 
                 {/* Like overlay */}
-                <Animated.View style={[styles.overlay, styles.likeOverlay, likeOverlayStyle]}>
-                  <Ionicons name="heart" size={80} color="#FF6B9D" />
+                <Animated.View
+                  style={[styles.overlay, styles.likeOverlay, likeOverlayStyle]}
+                >
+                  <Ionicons name="heart" size={80} color="#FFFFFF" />
+                  <Text style={styles.overlayText}>LIKE</Text>
                 </Animated.View>
 
                 {/* Share overlay */}
-                <Animated.View style={[styles.overlay, styles.shareOverlay, shareOverlayStyle]}>
-                  <Ionicons name="share-social" size={80} color="#8B5CF6" />
+                <Animated.View
+                  style={[styles.overlay, styles.shareOverlay, shareOverlayStyle]}
+                >
+                  <Ionicons name="share-social" size={80} color="#FFFFFF" />
+                  <Text style={styles.overlayText}>SHARE</Text>
+                </Animated.View>
+
+                {/* Left swipe cute message (inside card) */}
+                <Animated.View
+                  style={[styles.overlay, styles.leftSwipeOverlay, leftSwipeMessageStyle]}
+                >
+                  <Text style={styles.leftSwipeEmoji}>💕</Text>
+                  <Text style={styles.leftSwipeTitle}>Only love here</Text>
+                  <Text style={styles.leftSwipeText}>
+                    In this app, you only have the right to love
+                  </Text>
                 </Animated.View>
               </Animated.View>
             </GestureDetector>
 
             {/* Heart animation */}
             {showHeart && (
-              <View style={styles.heartAnimation}>
-                <Ionicons name="heart" size={100} color="#FF6B9D" />
-              </View>
+              <Animated.View style={[styles.heartAnimation, heartAnimStyle]}>
+                <Ionicons name="heart" size={120} color="#FF6B9D" />
+              </Animated.View>
             )}
           </>
         )}
       </View>
 
       {/* Instructions */}
-      {!isDeckEmpty && (
+      {!hasNoPhotos && !isDeckEmpty && (
         <View style={styles.instructions}>
           <View style={styles.instructionItem}>
             <Ionicons name="arrow-forward" size={20} color="#FF6B9D" />
@@ -198,14 +447,81 @@ export default function PhotoDeckScreen() {
       )}
 
       {/* Counter */}
-      {!isDeckEmpty && (
+      {!hasNoPhotos && !isDeckEmpty && (
         <View style={styles.counter}>
           <Text style={styles.counterText}>
-            {currentIndex + 1} / {photos.length}
+            {currentIndex + 1} / {deckPhotos.length}
           </Text>
         </View>
       )}
-    </SafeAreaView>
+
+      {/* Share Template Modal */}
+      <Modal
+        visible={showShareModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setShowShareModal(false);
+          resetPosition();
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Share with a message</Text>
+            <Text style={styles.modalSubtitle}>
+              Tap to copy message, then paste it in WhatsApp
+            </Text>
+
+            {PHOTO_SHARE_TEMPLATES.map((template) => (
+              <TouchableOpacity
+                key={template.id}
+                style={styles.templateButton}
+                onPress={() => handleShareWithTemplate(template.id)}
+              >
+                <View style={styles.templateContent}>
+                  <View style={styles.templateTextContainer}>
+                    <Text style={styles.templateLabel}>{template.label}</Text>
+                    <Text style={styles.templateMessage}>{template.message}</Text>
+                  </View>
+                  <View style={styles.copyIcon}>
+                    <Ionicons name="copy-outline" size={20} color="#8B5CF6" />
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity
+              style={styles.shareWithoutMessageButton}
+              onPress={handleShareWithoutMessage}
+            >
+              <Ionicons name="share-outline" size={20} color="#FFFFFF" />
+              <Text style={styles.shareWithoutMessageText}>Share without message</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => {
+                setShowShareModal(false);
+                resetPosition();
+              }}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Copied Feedback Overlay (not a Modal to avoid blocking share sheet) */}
+      {showCopiedFeedback && (
+        <View style={styles.copiedOverlay} pointerEvents="none">
+          <View style={styles.copiedContent}>
+            <Ionicons name="checkmark-circle" size={48} color="#10B981" />
+            <Text style={styles.copiedText}>Message copied!</Text>
+            <Text style={styles.copiedSubtext}>Paste it in WhatsApp</Text>
+          </View>
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -219,7 +535,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingBottom: 8,
+  },
+  headerButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerButtonInner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  addButtonInner: {
+    borderWidth: 2,
+    borderColor: '#FF6B9D',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
   },
   closeButton: {
     width: 44,
@@ -227,16 +571,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
   addButton: {
     width: 44,
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  statsBar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 24,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statText: {
+    fontSize: 13,
+    color: '#6B7280',
   },
   cardContainer: {
     flex: 1,
@@ -257,12 +612,24 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   backgroundCard: {
-    zIndex: -1,
+    // zIndex is set dynamically per card
+  },
+  remainingIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    backgroundColor: 'rgba(255, 107, 157, 0.15)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  remainingText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FF6B9D',
   },
   cardImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
   },
   overlay: {
     position: 'absolute',
@@ -274,15 +641,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   likeOverlay: {
-    backgroundColor: 'rgba(255, 107, 157, 0.3)',
+    backgroundColor: 'rgba(255, 107, 157, 0.7)',
   },
   shareOverlay: {
-    backgroundColor: 'rgba(139, 92, 246, 0.3)',
+    backgroundColor: 'rgba(139, 92, 246, 0.7)',
+  },
+  overlayText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginTop: 8,
   },
   heartAnimation: {
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  leftSwipeOverlay: {
+    backgroundColor: 'rgba(255, 107, 157, 0.9)',
+    padding: 24,
+  },
+  leftSwipeEmoji: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  leftSwipeTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  leftSwipeText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    opacity: 0.9,
   },
   emptyState: {
     alignItems: 'center',
@@ -303,6 +697,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     marginBottom: 24,
+    paddingHorizontal: 20,
   },
   addPhotosButton: {
     flexDirection: 'row',
@@ -323,6 +718,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 32,
     paddingVertical: 16,
+    paddingBottom: 24,
   },
   instructionItem: {
     flexDirection: 'row',
@@ -336,9 +732,121 @@ const styles = StyleSheet.create({
   counter: {
     alignItems: 'center',
     paddingBottom: 24,
+    marginTop: 8,
   },
   counterText: {
     fontSize: 14,
     color: '#9CA3AF',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 20,
+  },
+  templateButton: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  templateLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  templateMessage: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  shareWithoutMessageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#8B5CF6',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+    gap: 8,
+  },
+  shareWithoutMessageText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  cancelButton: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginTop: 8,
+  },
+  cancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  templateContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  templateTextContainer: {
+    flex: 1,
+  },
+  copyIcon: {
+    marginLeft: 12,
+    padding: 4,
+  },
+  copiedOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  copiedContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  copiedText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginTop: 12,
+  },
+  copiedSubtext: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 4,
   },
 });

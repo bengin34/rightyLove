@@ -1,0 +1,1215 @@
+{
+  "relationship_app_questions": [
+    {
+      "id": 1,
+      "category": "Takdir & Şükran",
+      "question": "Bugün seninle ilgili minnettar olduğum, fark ettiğin ya da etmediğin o küçük detay nedir?",
+      "vibe": "Duygusal",
+      "hint": "Gülüşün, bir işi yapış biçimin veya bana bakışın gibi..."
+    },
+    {
+      "id": 2,
+      "category": "Anılar",
+      "question": "Birlikte geçirdiğimiz tüm zamanlar içinde, 'İyi ki buradayız' dediğin en unutulmaz an hangisiydi?",
+      "vibe": "Nostaljik",
+      "hint": "İlk buluşma, bir tatil ya da evde geçirilen sıradan ama huzurlu bir an."
+    },
+    {
+      "id": 3,
+      "category": "Hayranlık",
+      "question": "Zor bir durumla karşılaştığında senin hangi özelliğine gizlice hayranlık duyuyorum?",
+      "vibe": "Güçlendirici",
+      "hint": "Sabrın, zekan, neşen veya çözüm odaklı olman."
+    },
+    {
+      "id": 4,
+      "category": "Gelecek & Hayaller",
+      "question": "Önümüzdeki 1 yıl içinde sadece ikimizin olduğu hangi macerayı yaşamak beni çok heyecanlandırıyor?",
+      "vibe": "Heyecan Verici",
+      "hint": "Bir gezi, yeni bir hobi veya ortak bir hedef."
+    },
+    {
+      "id": 5,
+      "category": "Sevgi Dilleri",
+      "question": "Bugün sana olan sevgimi en çok hangi küçük hareketimle hissettirebilirim?",
+      "vibe": "İlgi Odaklı",
+      "hint": "Bir kahve yapmak, uzunca sarılmak veya bir iltifat."
+    },
+    {
+      "id": 6,
+      "category": "Biz Olmak",
+      "question": "Sence 'biz' olduğumuzda ortaya çıkan ve dünyadaki başka kimsede olmayan en karakteristik özelliğimiz ne?",
+      "vibe": "Bağ Kurucu",
+      "hint": "Espri anlayışımız, uyumumuz veya birbirimizi tamamlama şeklimiz."
+    },
+    {
+      "id": 7,
+      "category": "Pozitif Duygular",
+      "question": "Sesini duyduğumda veya eve geldiğini bildiğimde içimde uyanan o en baskın duygu nedir?",
+      "vibe": "Romantik",
+      "hint": "Güven, huzur, heyecan veya neşe."
+    },
+    {
+      "id": 8,
+      "category": "Kişisel Gelişim",
+      "question": "Seninle tanıştığımdan beri, senin sayende kendimde fark ettiğim en güzel değişim nedir?",
+      "vibe": "Derin",
+      "hint": "Daha sabırlı olmam, daha çok gülmem veya hayata bakış açım."
+    },
+    {
+      "id": 9,
+      "category": "Eğlence",
+      "question": "Sadece bizim anladığımız ve her seferinde beni güldüren o 'iç şakamız' nedir?",
+      "vibe": "Eğlenceli",
+      "hint": "Kimsenin anlamadığı ama bizim kahkahalara boğulduğumuz o kelime veya olay."
+    },
+    {
+      "id": 10,
+      "category": "Güven & Huzur",
+      "question": "Kendimi biraz yorgun veya stresli hissettiğimde, senin hangi tavrın bana en büyük sığınak oluyor?",
+      "vibe": "Huzurlu",
+      "hint": "Dinleme şeklin, elini tutman veya sadece yanında olman."
+    },
+    {
+      "id": 11,
+      "category": "Takdir",
+      "question": "Bugün yaptığın hangi küçük şey beni gizlice gülümsetti?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 12,
+      "category": "Anılar",
+      "question": "Seninle ilk tanıştığım gün, üzerindeki kıyafet veya tavrınla ilgili hatırladığım ilk detay ne?",
+      "vibe": "Nostaljik"
+    },
+    {
+      "id": 13,
+      "category": "Gelecek",
+      "question": "Emekli olduğumuzda, bir sabah uyandığımızda penceremizden ne görmeyi hayal ediyorsun?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 14,
+      "category": "Hayranlık",
+      "question": "Arkadaş ortamındayken senin hangi özelliğinle içten içe gurur duyuyorum?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 15,
+      "category": "Eğlence",
+      "question": "Eğer bir film karakteri olsaydın, seni hangi kahramanla özdeşleştirirdim?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 16,
+      "category": "Derin Bağ",
+      "question": "Sana sarıldığımda hissettiğim o benzersiz 'ev' hissini nasıl tarif edebilirim?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 17,
+      "category": "Takdir",
+      "question": "En çok hangi konuda bana verdiğin desteği asla unutamam?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 18,
+      "category": "Küçük Şeyler",
+      "question": "Mutfakta bir şeyler hazırlarken seni izlemek neden hoşuma gidiyor?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 19,
+      "category": "Gelecek",
+      "question": "Ölmeden önce yapılacaklar listemizde (bucket list) sadece ikimizin olduğu o ilk madde ne?",
+      "vibe": "Heyecan Verici"
+    },
+    {
+      "id": 20,
+      "category": "Anılar",
+      "question": "Birlikte en çok güldüğümüz ve karnımızın ağrıdığı o anı hatırlıyor musun?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 21,
+      "category": "Hayranlık",
+      "question": "Senin zekanın veya mantığının beni en çok etkilediği an hangisiydi?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 22,
+      "category": "Takdir",
+      "question": "Yorgun olduğumda beni dinlendiren o özel davranışın nedir?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 23,
+      "category": "Eğlence",
+      "question": "Eğer ikimiz bir müzik grubu olsaydık, grubumuzun adı ve tarzı ne olurdu?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 24,
+      "category": "Derin Bağ",
+      "question": "Seninle ilgili öğrendiğim ve 'İşte benim ruh eşim' dediğim o ilk bilgi neydi?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 25,
+      "category": "Küçük Şeyler",
+      "question": "Hangi parfümün veya kokun bende her zaman 'mutluluk' duygusunu tetikliyor?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 26,
+      "category": "Gelecek",
+      "question": "Birlikte yaşlanırken, 80 yaşımızda el ele yürürken birbirimize ne fısıldayacağız?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 27,
+      "category": "Hayranlık",
+      "question": "Senin hayata karşı duruşunda en çok hangi 'cesur' yanını örnek alıyorum?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 28,
+      "category": "Anılar",
+      "question": "İlk el ele tutuştuğumuz andaki o heyecanı 1-10 arası puanlasak, senin için kaçtı?",
+      "vibe": "Nostaljik"
+    },
+    {
+      "id": 29,
+      "category": "Takdir",
+      "question": "Evimizin ruhunu oluşturan, senin kattığın o en güzel dokunuş nedir?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 30,
+      "category": "Eğlence",
+      "question": "Birlikte bir 'kurtarılma' hikayesi yazsaydık, beni hangi zor durumdan nasıl çekip alırdın?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 31,
+      "category": "Derin Bağ",
+      "question": "Kelimeler olmadan, sadece gözlerimize bakarak anlaştığımız o anlardan birini anlatır mısın?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 32,
+      "category": "Küçük Şeyler",
+      "question": "Sana özel olan o 'imza' gülüşünü gördüğümde içimden geçen ilk cümle ne?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 33,
+      "category": "Gelecek",
+      "question": "Bu hafta sonu dünyadaki tüm masraflarımız ödenmiş olsa, beni nereye götürürdün?",
+      "vibe": "Heyecan Verici"
+    },
+    {
+      "id": 34,
+      "category": "Takdir",
+      "question": "Hangi başarımı kutlarken verdiğin tepki bana kendimi en değerli hissettiren an oldu?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 35,
+      "category": "Anılar",
+      "question": "Seninle paylaştığım en sessiz ama en huzurlu anımız hangisiydi?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 36,
+      "category": "Hayranlık",
+      "question": "Senin nezaketin veya başkalarına olan yardımın beni ne kadar gururlandırıyor biliyor musun?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 37,
+      "category": "Eğlence",
+      "question": "Eğer ikimiz bir süper kahraman ikilisi olsaydık, özel güçlerimiz ne olurdu?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 38,
+      "category": "Küçük Şeyler",
+      "question": "Sabah uyandığında yüzünde gördüğüm o ilk ifade neden günümü güzelleştiriyor?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 39,
+      "category": "Derin Bağ",
+      "question": "Bana olan güvenini en çok hissettiğim an hangisiydi?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 40,
+      "category": "Anılar",
+      "question": "Birlikte izlediğimiz ve 'bizim filmimiz' dediğimiz o film hangisi?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 41,
+      "category": "Takdir",
+      "question": "Bir tartışmayı tatlıya bağlama şeklimizde senin en sevdiğim yanın hangisi?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 42,
+      "category": "Gelecek",
+      "question": "Birlikte inşa etmek istediğin o 'hayalindeki ev'in en önemli odası hangisi?",
+      "vibe": "Heyecan Verici"
+    },
+    {
+      "id": 43,
+      "category": "Hayranlık",
+      "question": "Senin tutkuyla bağlı olduğun bir şeyi anlatırken gözlerindeki o ışığı neye benzetiyorum?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 44,
+      "category": "Küçük Şeyler",
+      "question": "Bana gönderdiğin hangi mesajı hala saklıyorum veya defalarca okudum?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 45,
+      "category": "Eğlence",
+      "question": "Kendi özel dilimizde sadece ikimizin bildiği 3 kelime nedir?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 46,
+      "category": "Derin Bağ",
+      "question": "Senin yanındayken dünyanın geri kalanını unuttuğum o anları nasıl başarıyorsun?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 47,
+      "category": "Anılar",
+      "question": "Birlikte yaptığımız en 'çılgın' veya plansız yolculuk hangisiydi?",
+      "vibe": "Heyecan Verici"
+    },
+    {
+      "id": 48,
+      "category": "Takdir",
+      "question": "Benim en sevmediğim özelliğimi bile nasıl sevgiyle kabul edebiliyorsun?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 49,
+      "category": "Gelecek",
+      "question": "Bir sonraki doğum gününde sana hangi duyguyu hediye etmemi istersin?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 50,
+      "category": "Hayranlık",
+      "question": "Senin sabrının benim hayatımı nasıl kolaylaştırdığını farkında mısın?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 51,
+      "category": "Küçük Şeyler",
+      "question": "Bana sarıldığında gelen o kendine has kokuyu başka neyle kıyaslayabilirim?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 52,
+      "category": "Anılar",
+      "question": "Seninle geçirdiğimiz ilk tatilin en komik olayı neydi?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 53,
+      "category": "Derin Bağ",
+      "question": "Seni düşünürken arka planda hangi şarkı çalıyor?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 54,
+      "category": "Takdir",
+      "question": "Senin yanındayken kendimi neden daha 'cesur' hissediyorum?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 55,
+      "category": "Gelecek",
+      "question": "Beş yıl sonraki 'biz'e bugün bir not bıraksan ne yazardın?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 56,
+      "category": "Eğlence",
+      "question": "Partnerinin 'gizli yeteneği' nedir ve bu seni neden gülümsetiyor?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 57,
+      "category": "Hayranlık",
+      "question": "Senin en çok hangi 'çocuksu' yanını seviyorum?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 58,
+      "category": "Anılar",
+      "question": "Yağmurlu bir günde sadece ikimizin olduğu en güzel an hangisiydi?",
+      "vibe": "Nostaljik"
+    },
+    {
+      "id": 59,
+      "category": "Derin Bağ",
+      "question": "Gözlerinin içine baktığımda orada gördüğüm 'gelecek' resmi nasıl?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 60,
+      "category": "Takdir",
+      "question": "İşten eve geldiğimde beni karşılayışın neden tüm yorgunluğumu alıyor?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 61,
+      "category": "Küçük Şeyler",
+      "question": "Benim hakkımda sadece senin bildiğin o 'sevimli' alışkanlığım nedir?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 62,
+      "category": "Gelecek",
+      "question": "Birlikte öğrenmek istediğin o yeni hobi veya beceri nedir?",
+      "vibe": "Heyecan Verici"
+    },
+    {
+      "id": 63,
+      "category": "Hayranlık",
+      "question": "Zor zamanlarımda bana 'ışık' olan o cümlen hangisiydi?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 64,
+      "category": "Eğlence",
+      "question": "Eğer bir hayvan olsaydık, hangi hayvan ikilisi bizim uyumumuzu anlatırdı?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 65,
+      "category": "Anılar",
+      "question": "İlk buluşmamızda kalbinin en hızlı attığı o an hangisiydi?",
+      "vibe": "Nostaljik"
+    },
+    {
+      "id": 66,
+      "category": "Derin Bağ",
+      "question": "Birbirimizin cümlesini tamamladığımız o anlarda ne hissediyorsun?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 67,
+      "category": "Takdir",
+      "question": "Senin sayende hayatıma giren en güzel alışkanlık nedir?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 68,
+      "category": "Gelecek",
+      "question": "Yaşlandığımızda sallanan sandalyelerimizde otururken ne hakkında konuşacağız?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 69,
+      "category": "Hayranlık",
+      "question": "Senin dürüstlüğüne neden bu kadar çok hayranım?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 70,
+      "category": "Küçük Şeyler",
+      "question": "Partnerinin elini tuttuğunda hissettiğin o güven duygusunu nasıl tarif edersin?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 71,
+      "category": "Anılar",
+      "question": "Birlikte yediğimiz en basit ama en lezzetli yemek hangisiydi?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 72,
+      "category": "Eğlence",
+      "question": "Bir günlüğüne bedenlerimizi değiştirsek, senin bedeninde yapacağım ilk şey ne olurdu?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 73,
+      "category": "Derin Bağ",
+      "question": "Ruhunun en çok hangi rengi yansıttığını düşünüyorum?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 74,
+      "category": "Takdir",
+      "question": "Beni en çok hangi konuda motive etmen hayatımı değiştirdi?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 75,
+      "category": "Gelecek",
+      "question": "Seninle hangi şehirde kaybolmayı hayal ediyorum?",
+      "vibe": "Heyecan Verici"
+    },
+    {
+      "id": 76,
+      "category": "Hayranlık",
+      "question": "Senin merhametinin sınırlarını gördüğüm o an hangisiydi?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 77,
+      "category": "Küçük Şeyler",
+      "question": "En sevdiğin fotoğrafımız hangisi ve neden o?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 78,
+      "category": "Anılar",
+      "question": "Hangi şarkıyı duyduğunda aklına hemen 'biz' geliyoruz?",
+      "vibe": "Nostaljik"
+    },
+    {
+      "id": 79,
+      "category": "Derin Bağ",
+      "question": "Seninleyken 'maskelerimi' indirmemi sağlayan o şey nedir?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 80,
+      "category": "Takdir",
+      "question": "Bana olan aşkını en çok hissettiğim 'sıradan' an hangisiydi?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 81,
+      "category": "Gelecek",
+      "question": "Birlikte kuracağımız o büyük hayalin ilk adımı sence ne olmalı?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 82,
+      "category": "Eğlence",
+      "question": "Partnerinin en komik uyuma şekli veya sabah hali nedir?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 83,
+      "category": "Hayranlık",
+      "question": "Senin öğrenmeye olan merakın beni neden bu kadar etkiliyor?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 84,
+      "category": "Küçük Şeyler",
+      "question": "Partnerine bir madalya verecek olsan, hangi dalda 'Dünya Şampiyonu' olurdu?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 85,
+      "category": "Anılar",
+      "question": "Birlikte kutladığımız en anlamlı özel gün hangisiydi?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 86,
+      "category": "Derin Bağ",
+      "question": "Seninleyken kendimin 'en iyi versiyonu' olduğumu neden hissediyorum?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 87,
+      "category": "Takdir",
+      "question": "Partnerinin sana verdiği en iyi tavsiye neydi?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 88,
+      "category": "Gelecek",
+      "question": "Birlikte yapacağımız bir sonraki 'ilk' ne olacak?",
+      "vibe": "Heyecan Verici"
+    },
+    {
+      "id": 89,
+      "category": "Hayranlık",
+      "question": "Senin estetik bakış açını veya zevklerini neden çok beğeniyorum?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 90,
+      "category": "Küçük Şeyler",
+      "question": "Birlikte hazırladığımız o 'pazar kahvaltıları'nın en sevdiğin yanı nedir?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 91,
+      "category": "Anılar",
+      "question": "Seninle ilgili hatırladığım 'en küçük' ama en tatlı detay nedir?",
+      "vibe": "Nostaljik"
+    },
+    {
+      "id": 92,
+      "category": "Derin Bağ",
+      "question": "Birbirimizin sessizliğini paylaşabilmek sence neden bu kadar değerli?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 93,
+      "category": "Takdir",
+      "question": "Partnerinin senin için yaptığı o 'gizli kahramanlık' neydi?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 94,
+      "category": "Gelecek",
+      "question": "Partnerinle yaşlanmanın en güzel tarafı sence ne olacak?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 95,
+      "category": "Eğlence",
+      "question": "Eğer bir masalın içinde olsaydık, bizim sonumuz nasıl biterdi?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 96,
+      "category": "Hayranlık",
+      "question": "Senin başkalarına verdiğin değer neden benim kalbimi eritiyor?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 97,
+      "category": "Küçük Şeyler",
+      "question": "Partnerinin sana bakarken kullandığı o 'özel bakışı' nasıl tanımlarsın?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 98,
+      "category": "Anılar",
+      "question": "Partnerinle paylaştığın en heyecan verici 'başarı' anı hangisiydi?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 99,
+      "category": "Derin Bağ",
+      "question": "Senin yanındayken zamanın nasıl geçtiğini neden anlamıyorum?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 100,
+      "category": "Sonsuzluk",
+      "question": "Bugün partnerine 'Seni seviyorum' demek için en güzel sebebin ne?",
+      "vibe": "Aşk"
+    },
+
+    {
+      "id": 101,
+      "category": "Gelenekler",
+      "question": "Sadece ikimize özel olan ve her yıl mutlaka yapmalıyız dediğin o 'küçük gelenek' nedir?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 102,
+      "category": "Sosyal Dünya",
+      "question": "Kalabalık bir ortamda göz göze geldiğimizde bana fısıldadığın o gizli bakışın anlamı sence ne?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 103,
+      "category": "Kişisel Keşif",
+      "question": "Seninle tanışana kadar fark etmediğim ama senin sayende sevdiğim bir özelliğim var mı?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 104,
+      "category": "Hayali Senaryo",
+      "question": "Bir adaya düşsek ve yanımıza sadece 3 ortak anımızı alma şansımız olsa, hangi 3 kareyi seçerdin?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 105,
+      "category": "Günlük Destek",
+      "question": "Bugün senin için yapabileceğim, modunu anında yükseltecek o 'küçük jest' ne olurdu?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 106,
+      "category": "İlham",
+      "question": "Senin çalışma disiplinin veya bir şeye odaklanma şeklin beni neden bu kadar çok motive ediyor?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 107,
+      "category": "Duyusal",
+      "question": "Seninle özdeşleştirdiğim o huzurlu 'ev kokusu' sence hangi notalardan oluşuyor?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 108,
+      "category": "Gelecek",
+      "question": "Birlikte yaşayacağımız evin bahçesine bir ağaç diksek, bu hangi ağaç olurdu ve neden?",
+      "vibe": "Derin"
+    },
+    {
+      "id": 109,
+      "category": "Mizah",
+      "question": "Seninle ilgili en sevdiğim 'garip' ama bir o kadar tatlı alışkanlığın nedir?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 110,
+      "category": "Takdir",
+      "question": "Başkalarına benden bahsederken en çok hangi özelliğimi gururla anlatıyorsun?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 111,
+      "category": "İletişim",
+      "question": "Üzgün olduğumda sadece elime dokunmanın bana yettiğini nasıl bu kadar iyi biliyorsun?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 112,
+      "category": "Anılar",
+      "question": "Birlikte ıslanmaktan çekinmediğimiz o yağmurlu günü/anı hatırlıyor musun?",
+      "vibe": "Nostaljik"
+    },
+    {
+      "id": 113,
+      "category": "Hayali Senaryo",
+      "question": "Eğer zaman yolculuğu yapabilseydik, seninle hangi döneme gidip bir gün geçirmek isterdim?",
+      "vibe": "Heyecan Verici"
+    },
+    {
+      "id": 114,
+      "category": "Küçük Şeyler",
+      "question": "Mutfakta beraber bir şeyler yaparken senin 'şef' yardımcın olmak neden çok keyifli?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 115,
+      "category": "Güven",
+      "question": "Sana dair en çok hangi konuda 'asla beni yanıltmaz' diyorum?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 116,
+      "category": "Gelenekler",
+      "question": "Her hafta sonu ritüelimiz haline gelmesini istediğin o aktivite ne?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 117,
+      "category": "Sosyal Dünya",
+      "question": "Birbirimizin en yakın arkadaşı olmamız, diğer insanlarla olan ilişkilerimizi nasıl güzelleştiriyor?",
+      "vibe": "Derin"
+    },
+    {
+      "id": 118,
+      "category": "Kişisel Keşif",
+      "question": "Seninle geçirdiğim süre boyunca sabır konusunda senden öğrendiğim en büyük ders ne?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 119,
+      "category": "Mizah",
+      "question": "Partnerinin en iyi yaptığı 'taklit' veya komik hareket hangisi?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 120,
+      "category": "Derin Bağ",
+      "question": "Sadece gözlerimize bakarak anlaştığımız o sessiz dilimizi neye borçluyuz?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 121,
+      "category": "Gelecek",
+      "question": "Birlikte yaşlanırken en çok hangi hobiyi beraber sürdürmeyi hayal ediyorsun?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 122,
+      "category": "Takdir",
+      "question": "Benim en ufak bir başarımı bile nasıl dev bir kutlamaya çevirebiliyorsun?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 123,
+      "category": "Duyusal",
+      "question": "Hangi şarkı çaldığında sanki zaman duruyor ve sadece biz kalıyoruz?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 124,
+      "category": "Küçük Şeyler",
+      "question": "Sabahları uykulu halinle bana bakışın neden günün en güzel anı?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 125,
+      "category": "Hayali Senaryo",
+      "question": "İkimiz bir roman yazsaydık, kitabın adı ve son cümlesi ne olurdu?",
+      "vibe": "Derin"
+    },
+    {
+      "id": 126,
+      "category": "Kişisel Keşif",
+      "question": "Partnerinin senin üzerindeki 'sakinleştirici' etkisini nasıl tarif edersin?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 127,
+      "category": "Anılar",
+      "question": "Birlikte izlediğimiz ilk gün batımında ne hissettiğini hatırlıyor musun?",
+      "vibe": "Nostaljik"
+    },
+    {
+      "id": 128,
+      "category": "İlham",
+      "question": "Hayata karşı pozitif kalmanı sağlayan o içindeki güce nasıl hayran olmayayım?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 129,
+      "category": "Günlük Destek",
+      "question": "İşlerin yoğun olduğu bir günde sana atacağım hangi emoji seni gülümsetir?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 130,
+      "category": "Gelenekler",
+      "question": "Tatillerde mutlaka yapmalıyız dediğimiz o bize özel 'ritüel' nedir?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 131,
+      "category": "Sosyal Dünya",
+      "question": "Yeni bir ortama girdiğimizde birbirimizi nasıl tamamladığımızı fark ediyor musun?",
+      "vibe": "Derin"
+    },
+    {
+      "id": 132,
+      "category": "Derin Bağ",
+      "question": "Ruhunun en derinlerinde sadece benim görebildiğim o 'özel oda'da ne var?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 133,
+      "category": "Mizah",
+      "question": "Birlikteyken yaptığımız en saçma ama en eğlenceli şey neydi?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 134,
+      "category": "Takdir",
+      "question": "Zor bir karar verirken senin fikrini almanın bana verdiği o büyük güven hissi...",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 135,
+      "category": "Gelecek",
+      "question": "10 yıl sonraki halimize tek kelimelik bir tavsiye versen bu ne olurdu?",
+      "vibe": "Derin"
+    },
+    {
+      "id": 136,
+      "category": "Duyusal",
+      "question": "Partnerinin ses tonundaki hangi vurgu sana huzur veriyor?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 137,
+      "category": "Küçük Şeyler",
+      "question": "Televizyon izlerken birbirimize yaslanış şeklimizin neden bir dili var?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 138,
+      "category": "Hayali Senaryo",
+      "question": "Eğer bir sihirli değneğin olsa, bizim için hangi 'an'ı sonsuza kadar dondururdun?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 139,
+      "category": "Kişisel Keşif",
+      "question": "Partnerinin yanında en çok hangi konuda 'kendin gibi' hissediyorsun?",
+      "vibe": "Derin"
+    },
+    {
+      "id": 140,
+      "category": "Anılar",
+      "question": "Birlikte yürüdüğümüz o en uzun yolun hikayesi neydi?",
+      "vibe": "Nostaljik"
+    },
+    {
+      "id": 141,
+      "category": "İlham",
+      "question": "Senin nezaketinin, kaba bir dünyada bana nasıl nefes aldırdığını biliyor musun?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 142,
+      "category": "Gelenekler",
+      "question": "Her pazar akşamı birbirimize söyleyeceğimiz o 'iyi ki' cümlesi ne olsun?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 143,
+      "category": "Sosyal Dünya",
+      "question": "Arkadaşlarımızla olduğumuzda 'biz' olmanın en sevdiğin yanı nedir?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 144,
+      "category": "Derin Bağ",
+      "question": "Kalbinin ritmini sadece sarılarak hissetmek sence neden mucizevi?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 145,
+      "category": "Mizah",
+      "question": "Sadece ikimizin olduğu bir 'gizli kulüp' kurmuş olsak, kulübün şifresi ne olurdu?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 146,
+      "category": "Takdir",
+      "question": "Hangi küçük sakarlığımda bile bana olan sevginle gülümsüyorsun?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 147,
+      "category": "Gelecek",
+      "question": "Beraber çıkacağımız ilk uzun yolculuğun şarkı listesinde ilk sırada ne var?",
+      "vibe": "Heyecan Verici"
+    },
+    {
+      "id": 148,
+      "category": "Duyusal",
+      "question": "Partnerinin elini tuttuğunda parmak uçlarından kalbine akan o his...",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 149,
+      "category": "Küçük Şeyler",
+      "question": "Bana aldığın o en küçük ama en anlamlı hediye neydi ve neden onu saklıyorum?",
+      "vibe": "Nostaljik"
+    },
+    {
+      "id": 150,
+      "category": "Hayali Senaryo",
+      "question": "Eğer ikimiz birer yıldız olsaydık, gökyüzünde hangi takımyıldızını oluştururduk?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 151,
+      "category": "Kişisel Keşif",
+      "question": "Seninleyken 'hayır' demeyi veya sınırlarımı çizmeyi nasıl daha iyi öğrendim?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 152,
+      "category": "Anılar",
+      "question": "Birlikte kaybolduğumuz ama sonunda çok güzel bir yer bulduğumuz o anı hatırlıyor musun?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 153,
+      "category": "İlham",
+      "question": "Senin bir şeyi tutkuyla savunman neden benim sana tekrar aşık olmamı sağlıyor?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 154,
+      "category": "Gelenekler",
+      "question": "Mevsim geçişlerinde (örneğin ilkbahar geldiğinde) beraber yapacağımız ilk şey ne?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 155,
+      "category": "Sosyal Dünya",
+      "question": "Ailemizle bir araya geldiğimizde 'bizim' duruşumuzun en sevdiğin tarafı ne?",
+      "vibe": "Derin"
+    },
+    {
+      "id": 156,
+      "category": "Derin Bağ",
+      "question": "Seninleyken dünyanın gürültüsünü nasıl bu kadar kolay kısabiliyorum?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 157,
+      "category": "Mizah",
+      "question": "İkimiz birer emoji olsaydık, yan yana gelince nasıl görünürdük?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 158,
+      "category": "Takdir",
+      "question": "En kararsız olduğum anda senin 'buradayım' demen neden her şeyi çözüyor?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 159,
+      "category": "Gelecek",
+      "question": "Hayalimizdeki bahçede hangi meyveleri beraber toplayacağız?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 160,
+      "category": "Duyusal",
+      "question": "Partnerinin sana bakarken gözlerinin kenarında oluşan o çizgileri seviyor musun?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 161,
+      "category": "Küçük Şeyler",
+      "question": "Evde sıradan bir akşamda seninle aynı kitabı okumak veya film izlemek neden özel?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 162,
+      "category": "Hayali Senaryo",
+      "question": "Eğer dünyadaki tüm dilleri bilseydik, birbirimize hangi dilde 'seni seviyorum' derdik?",
+      "vibe": "Derin"
+    },
+    {
+      "id": 163,
+      "category": "Kişisel Keşif",
+      "question": "Senin sayende daha önce hiç denemediğim hangi yemeği veya aktiviteyi sevdim?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 164,
+      "category": "Anılar",
+      "question": "Partnerinin sana yaptığı en beklenmedik ve tatlı sürpriz neydi?",
+      "vibe": "Nostaljik"
+    },
+    {
+      "id": 165,
+      "category": "İlham",
+      "question": "Senin zorluklar karşısındaki o 'yıkılmaz' duruşunu nasıl örnek alıyorum?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 166,
+      "category": "Gelenekler",
+      "question": "Her ayın bir gününü 'bizim günümüz' ilan etsek, o gün ne yapardık?",
+      "vibe": "Heyecan Verici"
+    },
+    {
+      "id": 167,
+      "category": "Sosyal Dünya",
+      "question": "Dışarıdaki insanlar bizim en çok hangi özelliğimizi kıskanıyor olabilirler?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 168,
+      "category": "Derin Bağ",
+      "question": "Birbirimizin zihnindeki o 'sessiz düşünceleri' nasıl bu kadar iyi okuyoruz?",
+      "vibe": "Derin"
+    },
+    {
+      "id": 169,
+      "category": "Mizah",
+      "question": "Eğer ikimiz birer çizgi film karakteri olsaydık, başımızdan geçen en komik macera ne olurdu?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 170,
+      "category": "Takdir",
+      "question": "Partnerinin sana verdiği en cesurca destek neydi?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 171,
+      "category": "Gelecek",
+      "question": "Birlikte göreceğimiz o 'ilk' dünya harikası hangisi olmalı?",
+      "vibe": "Heyecan Verici"
+    },
+    {
+      "id": 172,
+      "category": "Duyusal",
+      "question": "Onun adını telefonunda gördüğünde kalbinde kıpırdayan o hissi tarif et.",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 173,
+      "category": "Küçük Şeyler",
+      "question": "Partnerinin sana hazırladığı o en basit 'moral tabağı' (meyve, kahve vb.) neden çok lezzetli?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 174,
+      "category": "Hayali Senaryo",
+      "question": "Birlikte bir 'zaman kapsülü' gömsek, içine bugünden ne koyardık?",
+      "vibe": "Derin"
+    },
+    {
+      "id": 175,
+      "category": "Kişisel Keşif",
+      "question": "Partnerinin yanında en çok hangi 'zayıf' yanını rahatça gösterebiliyorsun?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 176,
+      "category": "Anılar",
+      "question": "Beraber katıldığımız o en eğlenceli düğün veya parti hangisiydi?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 177,
+      "category": "İlham",
+      "question": "Onun hayata bakışındaki o 'naiflik' seni nasıl daha iyi bir insan yapıyor?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 178,
+      "category": "Gelenekler",
+      "question": "Yılın ilk karı yağdığında yapacağımız o ritüel ne olsun?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 179,
+      "category": "Sosyal Dünya",
+      "question": "Birbirimize verdiğimiz o 'eve gidelim artık' gizli işareti nedir?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 180,
+      "category": "Derin Bağ",
+      "question": "Ruhlarımızın birbirine 'dokunduğu' o en yüksek an hangisiydi?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 181,
+      "category": "Mizah",
+      "question": "Onun en çok hangi 'yanlış anladığı' kelimeye veya olaya gülüyoruz?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 182,
+      "category": "Takdir",
+      "question": "Partnerinin senin 'sessiz' çığlıklarını nasıl bu kadar iyi duyduğunu hiç düşündün mü?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 183,
+      "category": "Gelecek",
+      "question": "Birlikte yaşayacağımız o evin en çok hangi köşesinde vakit geçireceğiz?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 184,
+      "category": "Duyusal",
+      "question": "Onun teninin sıcaklığını en çok hangi mevsimde seviyorsun?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 185,
+      "category": "Küçük Şeyler",
+      "question": "Partnerinin sana ayırdığı o son lokma neden dünyanın en büyük aşk ilanı?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 186,
+      "category": "Hayali Senaryo",
+      "question": "Eğer dünyadaki tüm renkler silinseydi, birbirimizi hangi renkle hatırlardık?",
+      "vibe": "Derin"
+    },
+    {
+      "id": 187,
+      "category": "Kişisel Keşif",
+      "question": "Partnerinin seni en çok hangi konuda 'şaşırttığını' hatırlıyorsun?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 188,
+      "category": "Anılar",
+      "question": "Birlikte izlediğimiz o en sıkıcı filmde bile neden çok eğlendik?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 189,
+      "category": "İlham",
+      "question": "Onun öğrenme azmi senin içindeki hangi merakı tetikliyor?",
+      "vibe": "Güçlendirici"
+    },
+    {
+      "id": 190,
+      "category": "Gelenekler",
+      "question": "Her doğum gününde birbirimize yazacağımız o 'mektup' geleneğine ne dersin?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 191,
+      "category": "Sosyal Dünya",
+      "question": "Bir ortamda partnerinin senin yerini nasıl koruduğunu fark ettiğin o an...",
+      "vibe": "Derin"
+    },
+    {
+      "id": 192,
+      "category": "Derin Bağ",
+      "question": "Seni 'iyileştiren' o özel kelimesi veya cümlesi nedir?",
+      "vibe": "Duygusal"
+    },
+    {
+      "id": 193,
+      "category": "Mizah",
+      "question": "İkinizin ortak 'en saçma' dans figürü nasıl bir şey?",
+      "vibe": "Eğlenceli"
+    },
+    {
+      "id": 194,
+      "category": "Takdir",
+      "question": "Onun senin için yaptığı o 'görünmez' iyiliklerin ne kadar farkındasın?",
+      "vibe": "Tatlı"
+    },
+    {
+      "id": 195,
+      "category": "Gelecek",
+      "question": "Hayalimizdeki o küçük kafe/dükkan/atölye açılsa adı ne olurdu?",
+      "vibe": "Heyecan Verici"
+    },
+    {
+      "id": 196,
+      "category": "Duyusal",
+      "question": "Onun gülümsemesini bir doğa olayına benzetsen bu ne olurdu?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 197,
+      "category": "Küçük Şeyler",
+      "question": "Yorgun olduğunda partnerinin başını omzuna koyması neden dünyanın en güvenli yeri?",
+      "vibe": "Huzurlu"
+    },
+    {
+      "id": 198,
+      "category": "Hayali Senaryo",
+      "question": "Eğer birbirimizi başka bir hayatta bulsaydık, sence yine aynı şekilde mi aşık olurduk?",
+      "vibe": "Derin"
+    },
+    {
+      "id": 199,
+      "category": "Anılar",
+      "question": "Birlikte paylaştığımız 'en sessiz' ama 'en çok şey anlatan' fotoğrafımız hangisi?",
+      "vibe": "Romantik"
+    },
+    {
+      "id": 200,
+      "category": "Sonsuzluk",
+      "question": "Şu an partnerinin gözlerinin içine baksan, ona kelimesiz ne söylerdin?",
+      "vibe": "Aşk"
+    }
+  ]
+}

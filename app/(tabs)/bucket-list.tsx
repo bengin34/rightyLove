@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,84 +7,89 @@ import {
   FlatList,
   TextInput,
   Modal,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useBucketStore } from '@/stores/bucketStore';
+import { useActivityStore } from '@/stores/activityStore';
+import { openWhatsAppWithMessage } from '@/services/sharing';
+import type { BucketCategory, BucketItem } from '@/types';
 
-type Category = 'places' | 'things' | 'movies';
-type BucketItem = {
-  id: string;
-  text: string;
-  category: Category;
-  completed: boolean;
-  createdAt: Date;
-  completedAt?: Date;
-};
-
-const CATEGORIES: { key: Category; label: string; emoji: string }[] = [
+const CATEGORIES: { key: BucketCategory; label: string; emoji: string }[] = [
   { key: 'places', label: 'Places', emoji: '🌍' },
   { key: 'things', label: 'Things to Try', emoji: '✨' },
   { key: 'movies', label: 'Movies', emoji: '🎬' },
 ];
 
 export default function BucketListScreen() {
-  const [activeCategory, setActiveCategory] = useState<Category>('places');
+  const [activeCategory, setActiveCategory] = useState<BucketCategory>('places');
   const [showCompleted, setShowCompleted] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [newItemText, setNewItemText] = useState('');
+  const insets = useSafeAreaInsets();
 
-  // TODO: Get from store
-  const [items, setItems] = useState<BucketItem[]>([
-    { id: '1', text: 'Visit Paris together', category: 'places', completed: false, createdAt: new Date() },
-    { id: '2', text: 'Watch The Notebook', category: 'movies', completed: true, createdAt: new Date(), completedAt: new Date() },
-    { id: '3', text: 'Go stargazing', category: 'things', completed: false, createdAt: new Date() },
-  ]);
+  // Get from store
+  const { addItem, toggleComplete, getActiveItems, getCompletedItems } = useBucketStore();
+  const { logBucketActivity } = useActivityStore();
 
-  const filteredItems = items.filter(
-    (item) => item.category === activeCategory && (showCompleted ? item.completed : !item.completed)
-  );
+  const filteredItems = showCompleted
+    ? getCompletedItems(activeCategory)
+    : getActiveItems(activeCategory);
 
   const handleAddItem = () => {
     if (!newItemText.trim()) return;
-    const newItem: BucketItem = {
-      id: Date.now().toString(),
-      text: newItemText.trim(),
-      category: activeCategory,
-      completed: false,
-      createdAt: new Date(),
-    };
-    setItems([newItem, ...items]);
+    addItem(newItemText.trim(), activeCategory);
     setNewItemText('');
     setIsAddModalVisible(false);
   };
 
-  const handleToggleComplete = (id: string) => {
-    setItems(
-      items.map((item) =>
-        item.id === id
-          ? { ...item, completed: !item.completed, completedAt: !item.completed ? new Date() : undefined }
-          : item
-      )
+  const handleToggleComplete = useCallback((id: string, wasCompleted: boolean) => {
+    toggleComplete(id);
+    // Log activity when completing an item (not when uncompleting)
+    if (!wasCompleted) {
+      logBucketActivity();
+    }
+  }, [toggleComplete, logBucketActivity]);
+
+  const handleShareItem = useCallback(async (item: BucketItem) => {
+    const emoji = CATEGORIES.find(c => c.key === item.category)?.emoji || '';
+    const status = item.completedAt ? 'We did it!' : 'On our bucket list';
+    const message = `${emoji} ${status}: "${item.text}" 💕`;
+
+    const result = await openWhatsAppWithMessage(message);
+    if (!result.success && result.error) {
+      Alert.alert('Sharing failed', result.error);
+    }
+  }, []);
+
+  const renderItem = ({ item }: { item: BucketItem }) => {
+    const isCompleted = !!item.completedAt;
+    return (
+      <TouchableOpacity
+        style={styles.itemCard}
+        onPress={() => handleToggleComplete(item.id, isCompleted)}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.checkbox, isCompleted && styles.checkboxCompleted]}>
+          {isCompleted && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
+        </View>
+        <Text style={[styles.itemText, isCompleted && styles.itemTextCompleted]}>
+          {item.text}
+        </Text>
+        <TouchableOpacity
+          style={styles.shareButton}
+          onPress={() => handleShareItem(item)}
+        >
+          <Ionicons name="share-social-outline" size={20} color="#9CA3AF" />
+        </TouchableOpacity>
+      </TouchableOpacity>
     );
   };
-
-  const renderItem = ({ item }: { item: BucketItem }) => (
-    <TouchableOpacity
-      style={styles.itemCard}
-      onPress={() => handleToggleComplete(item.id)}
-      activeOpacity={0.7}
-    >
-      <View style={[styles.checkbox, item.completed && styles.checkboxCompleted]}>
-        {item.completed && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
-      </View>
-      <Text style={[styles.itemText, item.completed && styles.itemTextCompleted]}>
-        {item.text}
-      </Text>
-      <TouchableOpacity style={styles.shareButton}>
-        <Ionicons name="share-social-outline" size={20} color="#9CA3AF" />
-      </TouchableOpacity>
-    </TouchableOpacity>
-  );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -146,6 +151,7 @@ export default function BucketListScreen() {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>
@@ -167,8 +173,14 @@ export default function BucketListScreen() {
         transparent
         onRequestClose={() => setIsAddModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalBackdrop} />
+          </TouchableWithoutFeedback>
+          <View style={[styles.modalContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add to Bucket List</Text>
               <TouchableOpacity onPress={() => setIsAddModalVisible(false)}>
@@ -203,7 +215,7 @@ export default function BucketListScreen() {
               <Text style={styles.modalAddButtonText}>Add Item</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -344,15 +356,17 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
-    paddingBottom: 40,
   },
   modalHeader: {
     flexDirection: 'row',

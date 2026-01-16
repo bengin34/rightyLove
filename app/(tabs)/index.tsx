@@ -1,31 +1,93 @@
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import type { QuestionStatus } from '@/types';
+
+import { useActivityStore } from '@/stores/activityStore';
+import { useCoupleStore } from '@/stores/coupleStore';
+import { useMoodStore } from '@/stores/moodStore';
+import { usePhotoStore } from '@/stores/photoStore';
+import { getDailyQuestion } from '@/services/dailyQuestion';
+import MoodCheckIn, { MoodDisplay } from '@/components/MoodCheckIn';
+import type { QuestionStatus, DailyResponse } from '@/types';
+
+// Get greeting based on time of day
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+};
 
 export default function HomeScreen() {
-  // TODO: Get these from stores
-  const streak = 5;
-  const hasPartner = true;
-  const [questionStatus] = useState<QuestionStatus>('not_answered');
-  const todayMood: string | null = null;
+  const streak = useActivityStore((state) => state.streak);
+  const couple = useCoupleStore((state) => state.couple);
+  const todayMood = useMoodStore((state) => state.todayMood);
+  const photoCount = usePhotoStore((state) => state.photos.length);
+
+  const isPaired = couple?.memberB ? true : false;
+
+  const [refreshing, setRefreshing] = useState(false);
+  const [dailyData, setDailyData] = useState<DailyResponse | null>(null);
+  const [showMoodSheet, setShowMoodSheet] = useState(false);
+
+  // Determine question status
+  const getQuestionStatus = (): QuestionStatus => {
+    if (!dailyData) return 'not_answered';
+    if (dailyData.isUnlocked) return 'unlocked';
+    if (dailyData.myStatus === 'answered') return 'waiting';
+    return 'not_answered';
+  };
+
+  const questionStatus = getQuestionStatus();
+
+  // Fetch daily question data
+  const fetchDailyData = useCallback(async () => {
+    if (!isPaired) return;
+
+    const result = await getDailyQuestion();
+    if (result.success && result.data) {
+      setDailyData(result.data);
+    }
+  }, [isPaired]);
+
+  useEffect(() => {
+    fetchDailyData();
+  }, [fetchDailyData]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchDailyData();
+    setRefreshing(false);
+  }, [fetchDailyData]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#FF6B9D"
+          />
+        }
+      >
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Good morning! 💕</Text>
+            <Text style={styles.greeting}>{getGreeting()}! 💕</Text>
             <Text style={styles.streakText}>
-              {streak} day streak • Keep it going!
+              {streak.currentStreak > 0
+                ? `${streak.currentStreak} day streak • Keep it going!`
+                : 'Start your streak today!'}
             </Text>
           </View>
           <TouchableOpacity style={styles.streakBadge}>
             <Ionicons name="flame" size={20} color="#FF6B9D" />
-            <Text style={styles.streakNumber}>{streak}</Text>
+            <Text style={styles.streakNumber}>{streak.currentStreak}</Text>
           </TouchableOpacity>
         </View>
 
@@ -40,21 +102,30 @@ export default function HomeScreen() {
               <Ionicons name="images" size={24} color="#FF6B9D" />
             </View>
             <Text style={styles.cardTitle}>Photo Deck</Text>
+            {photoCount > 0 && (
+              <View style={styles.countBadge}>
+                <Text style={styles.countText}>{photoCount}</Text>
+              </View>
+            )}
           </View>
           <Text style={styles.cardDescription}>
-            Swipe through your memories together
+            {photoCount > 0
+              ? 'Swipe through your memories together'
+              : 'Add photos to start your "Us" album'}
           </Text>
           <View style={styles.cardAction}>
-            <Text style={styles.cardActionText}>Start swiping</Text>
+            <Text style={styles.cardActionText}>
+              {photoCount > 0 ? 'Start swiping' : 'Add photos'}
+            </Text>
             <Ionicons name="arrow-forward" size={20} color="#FF6B9D" />
           </View>
         </TouchableOpacity>
 
         {/* Daily Question Card */}
         <TouchableOpacity
-          style={[styles.card, !hasPartner && styles.cardDisabled]}
-          onPress={() => hasPartner && router.push('/daily-question')}
-          activeOpacity={hasPartner ? 0.9 : 1}
+          style={[styles.card, !isPaired && styles.cardDisabled]}
+          onPress={() => isPaired && router.push('/daily-question')}
+          activeOpacity={isPaired ? 0.9 : 1}
         >
           <View style={styles.cardHeader}>
             <View style={[styles.cardIcon, { backgroundColor: '#EDE9FE' }]}>
@@ -67,9 +138,9 @@ export default function HomeScreen() {
               </View>
             )}
           </View>
-          {!hasPartner ? (
+          {!isPaired ? (
             <Text style={styles.cardDescriptionMuted}>
-              Pair with your partner to unlock
+              Pair with your partner to unlock daily questions
             </Text>
           ) : questionStatus === 'not_answered' ? (
             <>
@@ -85,8 +156,12 @@ export default function HomeScreen() {
             </>
           ) : questionStatus === 'waiting' ? (
             <>
+              <View style={styles.statusRow}>
+                <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+                <Text style={styles.statusText}>You answered</Text>
+              </View>
               <Text style={styles.cardDescription}>
-                You answered ✓ Waiting for your partner...
+                Waiting for your partner to unlock...
               </Text>
               <View style={styles.cardAction}>
                 <Text style={[styles.cardActionText, { color: '#8B5CF6' }]}>
@@ -98,7 +173,7 @@ export default function HomeScreen() {
           ) : questionStatus === 'unlocked' ? (
             <>
               <Text style={styles.cardDescription}>
-                💕 Both answered! See what you said
+                Both answered! See what you said 💕
               </Text>
               <View style={styles.cardAction}>
                 <Text style={[styles.cardActionText, { color: '#10B981' }]}>
@@ -115,37 +190,95 @@ export default function HomeScreen() {
         </TouchableOpacity>
 
         {/* Mood Card */}
-        <View style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => setShowMoodSheet(true)}
+          activeOpacity={0.9}
+        >
           <View style={styles.cardHeader}>
             <View style={[styles.cardIcon, { backgroundColor: '#FEF3C7' }]}>
               <Ionicons name="happy" size={24} color="#F59E0B" />
             </View>
             <Text style={styles.cardTitle}>Today's Mood</Text>
           </View>
-          <Text style={styles.cardDescription}>
-            {todayMood ? `You're feeling ${todayMood}` : 'How are you feeling today?'}
-          </Text>
-          {!todayMood && (
-            <View style={styles.moodSelector}>
-              {['🙂', '😐', '😞', '😠', '😴'].map((emoji) => (
-                <TouchableOpacity
-                  key={emoji}
-                  style={styles.moodOption}
-                  onPress={() => {
-                    // TODO: Save mood
-                    console.log('Selected mood:', emoji);
-                  }}
-                >
-                  <Text style={styles.moodEmoji}>{emoji}</Text>
-                </TouchableOpacity>
-              ))}
+
+          {todayMood ? (
+            <View style={styles.moodCompleted}>
+              <MoodDisplay />
+              <Text style={styles.moodCompletedText}>
+                Tap to change or share with your partner
+              </Text>
             </View>
+          ) : (
+            <>
+              <Text style={styles.cardDescription}>
+                How are you feeling today?
+              </Text>
+              <View style={styles.moodPreview}>
+                {['🙂', '😐', '😞', '😠', '😴'].map((emoji) => (
+                  <View key={emoji} style={styles.moodPreviewItem}>
+                    <Text style={styles.moodPreviewEmoji}>{emoji}</Text>
+                  </View>
+                ))}
+              </View>
+              <View style={styles.cardAction}>
+                <Text style={[styles.cardActionText, { color: '#F59E0B' }]}>
+                  Check in
+                </Text>
+                <Ionicons name="arrow-forward" size={20} color="#F59E0B" />
+              </View>
+            </>
           )}
-        </View>
+        </TouchableOpacity>
+
+        {/* Streak Summary Card */}
+        {streak.currentStreak > 0 && (
+          <View style={styles.streakCard}>
+            <View style={styles.streakCardHeader}>
+              <Ionicons name="flame" size={24} color="#FF6B9D" />
+              <Text style={styles.streakCardTitle}>Your Streaks</Text>
+            </View>
+            <View style={styles.streakStats}>
+              <View style={styles.streakStat}>
+                <Text style={styles.streakStatValue}>{streak.currentStreak}</Text>
+                <Text style={styles.streakStatLabel}>Current</Text>
+              </View>
+              <View style={styles.streakDivider} />
+              <View style={styles.streakStat}>
+                <Text style={styles.streakStatValue}>{streak.longestStreak}</Text>
+                <Text style={styles.streakStatLabel}>Longest</Text>
+              </View>
+              <View style={styles.streakDivider} />
+              <View style={styles.streakStat}>
+                <Text style={styles.streakStatValue}>
+                  {streak.activeDaysThisWeek}/7
+                </Text>
+                <Text style={styles.streakStatLabel}>This week</Text>
+              </View>
+              {streak.coupleUnlockStreak !== undefined && streak.coupleUnlockStreak > 0 && (
+                <>
+                  <View style={styles.streakDivider} />
+                  <View style={styles.streakStat}>
+                    <Text style={[styles.streakStatValue, { color: '#8B5CF6' }]}>
+                      {streak.coupleUnlockStreak}
+                    </Text>
+                    <Text style={styles.streakStatLabel}>Unlocks</Text>
+                  </View>
+                </>
+              )}
+            </View>
+          </View>
+        )}
 
         {/* Bottom padding */}
         <View style={{ height: 24 }} />
       </ScrollView>
+
+      {/* Mood Check-in Sheet */}
+      <MoodCheckIn
+        visible={showMoodSheet}
+        onClose={() => setShowMoodSheet(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -223,6 +356,17 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     flex: 1,
   },
+  countBadge: {
+    backgroundColor: '#FFF0F3',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  countText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FF6B9D',
+  },
   unlockedBadge: {
     backgroundColor: '#D1FAE5',
     padding: 6,
@@ -239,6 +383,17 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     fontStyle: 'italic',
   },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#10B981',
+  },
   cardAction: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -249,20 +404,74 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FF6B9D',
   },
-  moodSelector: {
+  moodPreview: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 8,
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
-  moodOption: {
+  moodPreviewItem: {
     backgroundColor: '#F9FAFB',
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  moodEmoji: {
-    fontSize: 28,
+  moodPreviewEmoji: {
+    fontSize: 24,
+  },
+  moodCompleted: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  moodCompletedText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#9CA3AF',
+  },
+  streakCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  streakCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  streakCardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  streakStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  streakStat: {
+    alignItems: 'center',
+  },
+  streakStatValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FF6B9D',
+  },
+  streakStatLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  streakDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: '#E5E7EB',
   },
 });

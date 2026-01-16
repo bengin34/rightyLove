@@ -2,9 +2,43 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useCoupleStore } from '@/stores/coupleStore';
 import { useActivityStore } from '@/stores/activityStore';
-import type { DailyPrompt, Answer, Question, DailyResponse } from '@/types';
+import type { Answer, DailyResponse, RelationshipType } from '@/types';
 
 const getTodayKey = () => new Date().toISOString().split('T')[0];
+
+// Get a random question using the database function
+// This avoids questions shown in the last 60 days and filters by relationship type
+async function getRandomQuestionId(coupleId: string, relationshipType: RelationshipType): Promise<string | null> {
+  const { data, error } = await supabase
+    .rpc('get_daily_question', {
+      p_couple_id: coupleId,
+      p_relationship_type: relationshipType,
+    });
+
+  if (error) {
+    console.error('Error getting random question:', error);
+    return null;
+  }
+
+  return data;
+}
+
+// Record question in history to prevent repeats within 60 days
+async function recordQuestionHistory(coupleId: string, questionId: string): Promise<void> {
+  const { error } = await supabase
+    .from('question_history')
+    .upsert({
+      couple_id: coupleId,
+      question_id: questionId,
+      shown_at: new Date().toISOString(),
+    }, {
+      onConflict: 'couple_id,question_id',
+    });
+
+  if (error) {
+    console.error('Error recording question history:', error);
+  }
+}
 
 // Get today's daily question
 export async function getDailyQuestion(): Promise<{
@@ -35,17 +69,16 @@ export async function getDailyQuestion(): Promise<{
 
     // If no prompt exists, create one
     if (promptError && promptError.code === 'PGRST116') {
-      // Select a random question
-      const { data: questions, error: qError } = await supabase
-        .from('questions')
-        .select()
-        .limit(1);
+      // Get relationship type from onboarding (default to 'dating')
+      const relationshipType = useAuthStore.getState().onboarding.relationshipType || 'dating';
 
-      if (qError || !questions?.length) {
+      // Get a random question using the database function
+      // This avoids questions shown in the last 60 days and filters by relationship type
+      const questionId = await getRandomQuestionId(couple.id, relationshipType);
+
+      if (!questionId) {
         return { success: false, error: 'No questions available' };
       }
-
-      const question = questions[0];
 
       // Create daily prompt
       const { data: newPrompt, error: createError } = await supabase
@@ -53,7 +86,7 @@ export async function getDailyQuestion(): Promise<{
         .insert({
           couple_id: couple.id,
           date_key: dateKey,
-          question_id: question.id,
+          question_id: questionId,
         })
         .select(`
           *,
@@ -64,6 +97,9 @@ export async function getDailyQuestion(): Promise<{
       if (createError) {
         return { success: false, error: createError.message };
       }
+
+      // Record this question in history to prevent repeats
+      await recordQuestionHistory(couple.id, questionId);
 
       prompt = newPrompt;
     } else if (promptError) {

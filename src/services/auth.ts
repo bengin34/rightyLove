@@ -1,15 +1,36 @@
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
+import * as Linking from 'expo-linking';
+import Constants from 'expo-constants';
 import type { User } from '@/types';
+
+// Get the correct redirect URL based on environment
+function getRedirectUrl(): string {
+  // For development with Expo Go, use the Expo development URL
+  // For production/dev builds, use the custom scheme
+  const isDev = __DEV__;
+
+  if (isDev) {
+    // This creates a URL like: exp://192.168.x.x:8081/--/auth/callback
+    // or for Expo Go: exp://u.expo.dev/[project-id]/--/auth/callback
+    return Linking.createURL('auth/callback');
+  }
+
+  // Production: use custom scheme
+  return 'rightylove://auth/callback';
+}
 
 // Send magic link email
 export async function sendMagicLink(email: string): Promise<{ success: boolean; error?: string }> {
   try {
+    const redirectUrl = getRedirectUrl();
+    console.log('Magic link redirect URL:', redirectUrl);
+
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
         // For email magic link - user receives link to click
-        emailRedirectTo: 'rightylove://auth/callback',
+        emailRedirectTo: redirectUrl,
       },
     });
 

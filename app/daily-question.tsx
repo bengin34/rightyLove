@@ -1,51 +1,186 @@
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Share, KeyboardAvoidingView, Platform } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+} from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-type QuestionStatus = 'not_answered' | 'waiting' | 'unlocked' | 'missed';
+import { getDailyQuestion, submitAnswer } from '@/services/dailyQuestion';
+import {
+  shareAnswerHighlight,
+  sendNudgeViaWhatsApp,
+  NUDGE_TEMPLATES,
+} from '@/services/sharing';
+import { useCoupleStore } from '@/stores/coupleStore';
+import type { DailyResponse, QuestionStatus } from '@/types';
+
+const MAX_LENGTH = 500;
 
 export default function DailyQuestionScreen() {
-  // TODO: Get from store/server
-  const [status, setStatus] = useState<QuestionStatus>('not_answered');
+  const couple = useCoupleStore((state) => state.couple);
+  const isPaired = couple?.memberB ? true : false;
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [dailyData, setDailyData] = useState<DailyResponse | null>(null);
   const [answer, setAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showNudgeModal, setShowNudgeModal] = useState(false);
 
-  const question = "What's one small thing your partner does that always makes you smile?";
-  const myAnswer = "When you make me coffee in the morning without me asking. It shows you're thinking of me.";
-  const partnerAnswer = "The way you always hold my hand when we walk together, even after all this time.";
-  const maxLength = 280;
+  // Determine status from daily data
+  const getStatus = (): QuestionStatus => {
+    if (!dailyData) return 'not_answered';
+    if (dailyData.isUnlocked) return 'unlocked';
+    if (dailyData.myStatus === 'answered') return 'waiting';
+    return 'not_answered';
+  };
 
-  const handleSubmit = async () => {
+  const status = getStatus();
+
+  // Fetch daily question on mount
+  useEffect(() => {
+    fetchDailyQuestion();
+  }, []);
+
+  const fetchDailyQuestion = async () => {
+    setIsLoading(true);
+    const result = await getDailyQuestion();
+    setIsLoading(false);
+
+    if (result.success && result.data) {
+      setDailyData(result.data);
+    }
+  };
+
+  const handleSubmit = useCallback(async () => {
     if (!answer.trim() || isSubmitting) return;
+
     setIsSubmitting(true);
-    // TODO: Submit to server
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setStatus('waiting');
-    }, 1000);
-  };
+    const result = await submitAnswer(answer.trim());
+    setIsSubmitting(false);
 
-  const handleNudge = async () => {
-    try {
-      await Share.share({
-        message: `Hey! 💕 I answered today's question on RightyLove. Your turn to unlock our answers!`,
-      });
-    } catch (error) {
-      console.error('Error sending nudge:', error);
+    if (result.success) {
+      // Refresh to get updated state
+      fetchDailyQuestion();
+    } else {
+      Alert.alert('Error', result.error || 'Failed to submit answer');
     }
-  };
+  }, [answer, isSubmitting]);
 
-  const handleShareHighlight = async () => {
-    try {
-      await Share.share({
-        message: `Today's RightyLove question:\n"${question}"\n\nOur answers 💕\n\nMe: "${myAnswer}"\n\nPartner: "${partnerAnswer}"`,
-      });
-    } catch (error) {
-      console.error('Error sharing:', error);
+  const handleNudge = useCallback(async (templateId: string) => {
+    setShowNudgeModal(false);
+    const result = await sendNudgeViaWhatsApp(templateId);
+
+    if (!result.success && result.error) {
+      Alert.alert('Error', result.error);
     }
-  };
+  }, []);
+
+  const handleShareHighlight = useCallback(async () => {
+    if (!dailyData?.prompt?.question || !dailyData.myAnswer) return;
+
+    const result = await shareAnswerHighlight(
+      dailyData.prompt.question.text,
+      dailyData.myAnswer.text,
+      dailyData.partnerAnswer?.text
+    );
+
+    if (!result.success && result.error) {
+      Alert.alert('Error', result.error);
+    }
+  }, [dailyData]);
+
+  // Not paired state
+  if (!isPaired) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
+            <Ionicons name="close" size={28} color="#1F2937" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Daily Question</Text>
+          <View style={styles.headerRight} />
+        </View>
+
+        <View style={styles.notPairedContainer}>
+          <View style={styles.notPairedIcon}>
+            <Ionicons name="people" size={64} color="#8B5CF6" />
+          </View>
+          <Text style={styles.notPairedTitle}>Pair with your partner first</Text>
+          <Text style={styles.notPairedText}>
+            Daily questions require you to be paired with your partner. Once paired,
+            you'll both answer the same question each day and unlock each other's
+            answers!
+          </Text>
+          <TouchableOpacity
+            style={styles.pairButton}
+            onPress={() => router.replace('/(onboarding)/pair-partner')}
+          >
+            <Ionicons name="link" size={20} color="#FFFFFF" />
+            <Text style={styles.pairButtonText}>Pair Now</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
+            <Ionicons name="close" size={28} color="#1F2937" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Daily Question</Text>
+          <View style={styles.headerRight} />
+        </View>
+
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#8B5CF6" />
+          <Text style={styles.loadingText}>Loading today's question...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // No question available
+  if (!dailyData?.prompt) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
+            <Ionicons name="close" size={28} color="#1F2937" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Daily Question</Text>
+          <View style={styles.headerRight} />
+        </View>
+
+        <View style={styles.errorContainer}>
+          <Ionicons name="warning" size={64} color="#F59E0B" />
+          <Text style={styles.errorTitle}>No question available</Text>
+          <Text style={styles.errorText}>
+            We couldn't load today's question. Please try again later.
+          </Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchDailyQuestion}>
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const question = dailyData.prompt.question;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -62,13 +197,27 @@ export default function DailyQuestionScreen() {
           <View style={styles.headerRight} />
         </View>
 
-        <View style={styles.content}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Question Card */}
           <View style={styles.questionCard}>
             <View style={styles.questionIcon}>
               <Ionicons name="chatbubbles" size={32} color="#8B5CF6" />
             </View>
-            <Text style={styles.questionText}>{question}</Text>
+            <Text style={styles.questionText}>{question.text}</Text>
+            {question.tags.length > 0 && (
+              <View style={styles.tagsRow}>
+                {question.tags.slice(0, 2).map((tag) => (
+                  <View key={tag} style={styles.tag}>
+                    <Text style={styles.tagText}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
 
           {/* State A: Not Answered */}
@@ -81,21 +230,31 @@ export default function DailyQuestionScreen() {
                 multiline
                 value={answer}
                 onChangeText={setAnswer}
-                maxLength={maxLength}
+                maxLength={MAX_LENGTH}
               />
               <View style={styles.inputFooter}>
-                <Text style={styles.charCount}>
-                  {answer.length}/{maxLength}
+                <Text
+                  style={[
+                    styles.charCount,
+                    answer.length > MAX_LENGTH * 0.9 && styles.charCountWarning,
+                  ]}
+                >
+                  {answer.length}/{MAX_LENGTH}
                 </Text>
               </View>
               <TouchableOpacity
-                style={[styles.submitButton, !answer.trim() && styles.submitButtonDisabled]}
+                style={[
+                  styles.submitButton,
+                  (!answer.trim() || isSubmitting) && styles.submitButtonDisabled,
+                ]}
                 onPress={handleSubmit}
                 disabled={!answer.trim() || isSubmitting}
               >
-                <Text style={styles.submitButtonText}>
-                  {isSubmitting ? 'Submitting...' : 'Submit Answer'}
-                </Text>
+                {isSubmitting ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.submitButtonText}>Submit Answer</Text>
+                )}
               </TouchableOpacity>
               <Text style={styles.disclaimer}>
                 Your answer can't be edited after submission
@@ -104,7 +263,7 @@ export default function DailyQuestionScreen() {
           )}
 
           {/* State B: Waiting for Partner */}
-          {status === 'waiting' && (
+          {status === 'waiting' && dailyData.myAnswer && (
             <View style={styles.waitingSection}>
               <View style={styles.statusBadge}>
                 <Ionicons name="checkmark-circle" size={24} color="#10B981" />
@@ -113,12 +272,12 @@ export default function DailyQuestionScreen() {
 
               <View style={styles.myAnswerPreview}>
                 <Text style={styles.myAnswerLabel}>Your answer:</Text>
-                <Text style={styles.myAnswerText}>{myAnswer}</Text>
+                <Text style={styles.myAnswerText}>{dailyData.myAnswer.text}</Text>
               </View>
 
               <View style={styles.waitingInfo}>
                 <View style={styles.waitingIcon}>
-                  <Ionicons name="hourglass" size={48} color="#F59E0B" />
+                  <Ionicons name="hourglass-outline" size={48} color="#F59E0B" />
                 </View>
                 <Text style={styles.waitingTitle}>Waiting for your partner</Text>
                 <Text style={styles.waitingText}>
@@ -126,7 +285,10 @@ export default function DailyQuestionScreen() {
                 </Text>
               </View>
 
-              <TouchableOpacity style={styles.nudgeButton} onPress={handleNudge}>
+              <TouchableOpacity
+                style={styles.nudgeButton}
+                onPress={() => setShowNudgeModal(true)}
+              >
                 <Ionicons name="notifications" size={20} color="#8B5CF6" />
                 <Text style={styles.nudgeButtonText}>Send a Nudge</Text>
               </TouchableOpacity>
@@ -134,7 +296,7 @@ export default function DailyQuestionScreen() {
           )}
 
           {/* State C: Unlocked */}
-          {status === 'unlocked' && (
+          {status === 'unlocked' && dailyData.myAnswer && (
             <View style={styles.unlockedSection}>
               <View style={styles.unlockedBadge}>
                 <Ionicons name="lock-open" size={24} color="#10B981" />
@@ -144,7 +306,7 @@ export default function DailyQuestionScreen() {
               <View style={styles.answersContainer}>
                 <View style={styles.answerCard}>
                   <Text style={styles.answerCardLabel}>Your answer</Text>
-                  <Text style={styles.answerCardText}>{myAnswer}</Text>
+                  <Text style={styles.answerCardText}>{dailyData.myAnswer.text}</Text>
                 </View>
 
                 <View style={styles.answerDivider}>
@@ -153,10 +315,14 @@ export default function DailyQuestionScreen() {
                   <View style={styles.dividerLine} />
                 </View>
 
-                <View style={[styles.answerCard, styles.partnerAnswerCard]}>
-                  <Text style={styles.answerCardLabel}>Partner's answer</Text>
-                  <Text style={styles.answerCardText}>{partnerAnswer}</Text>
-                </View>
+                {dailyData.partnerAnswer && (
+                  <View style={[styles.answerCard, styles.partnerAnswerCard]}>
+                    <Text style={styles.answerCardLabel}>Partner's answer</Text>
+                    <Text style={styles.answerCardText}>
+                      {dailyData.partnerAnswer.text}
+                    </Text>
+                  </View>
+                )}
               </View>
 
               <TouchableOpacity style={styles.shareButton} onPress={handleShareHighlight}>
@@ -170,7 +336,7 @@ export default function DailyQuestionScreen() {
           {status === 'missed' && (
             <View style={styles.missedSection}>
               <View style={styles.missedIcon}>
-                <Ionicons name="sad" size={64} color="#9CA3AF" />
+                <Ionicons name="sad-outline" size={64} color="#9CA3AF" />
               </View>
               <Text style={styles.missedTitle}>Not unlocked today</Text>
               <Text style={styles.missedText}>
@@ -181,8 +347,43 @@ export default function DailyQuestionScreen() {
               </TouchableOpacity>
             </View>
           )}
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Nudge Template Modal */}
+      <Modal
+        visible={showNudgeModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowNudgeModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Send a nudge</Text>
+            <Text style={styles.modalSubtitle}>
+              Choose a message to remind your partner
+            </Text>
+
+            {NUDGE_TEMPLATES.map((template) => (
+              <TouchableOpacity
+                key={template.id}
+                style={styles.templateButton}
+                onPress={() => handleNudge(template.id)}
+              >
+                <Text style={styles.templateLabel}>{template.label}</Text>
+                <Text style={styles.templateMessage}>{template.message}</Text>
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowNudgeModal(false)}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -193,6 +394,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF5F7',
   },
   keyboardView: {
+    flex: 1,
+  },
+  scrollView: {
     flex: 1,
   },
   header: {
@@ -217,9 +421,95 @@ const styles = StyleSheet.create({
     width: 44,
   },
   content: {
-    flex: 1,
     paddingHorizontal: 20,
+    paddingBottom: 40,
   },
+  // Loading & Error states
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  errorTitle: {
+    marginTop: 16,
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  errorText: {
+    marginTop: 8,
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 24,
+    backgroundColor: '#8B5CF6',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  // Not paired state
+  notPairedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  notPairedIcon: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#EDE9FE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  notPairedTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  notPairedText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  pairButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#8B5CF6',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    gap: 8,
+  },
+  pairButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  // Question card
   questionCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
@@ -248,6 +538,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 28,
   },
+  tagsRow: {
+    flexDirection: 'row',
+    marginTop: 16,
+    gap: 8,
+  },
+  tag: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  tagText: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  // Answer section (not answered)
   answerSection: {
     flex: 1,
   },
@@ -272,14 +578,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9CA3AF',
   },
+  charCountWarning: {
+    color: '#F59E0B',
+  },
   submitButton: {
     backgroundColor: '#8B5CF6',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
   },
   submitButtonDisabled: {
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#D1D5DB',
   },
   submitButtonText: {
     fontSize: 18,
@@ -292,6 +603,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 12,
   },
+  // Waiting section
   waitingSection: {
     flex: 1,
   },
@@ -359,6 +671,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#8B5CF6',
   },
+  // Unlocked section
   unlockedSection: {
     flex: 1,
   },
@@ -426,11 +739,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
+  // Missed section
   missedSection: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
+    paddingVertical: 40,
   },
   missedIcon: {
     marginBottom: 24,
@@ -457,5 +772,57 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#374151',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 20,
+  },
+  templateButton: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  templateLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  templateMessage: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  cancelButton: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginTop: 8,
+  },
+  cancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
   },
 });
