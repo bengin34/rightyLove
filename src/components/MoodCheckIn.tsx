@@ -19,13 +19,14 @@ import { useMoodStore } from '@/stores/moodStore';
 import { useActivityStore } from '@/stores/activityStore';
 import { shareMoodViaWhatsApp } from '@/services/sharing';
 import type { Mood } from '@/types';
+import { useTranslation } from '@/i18n';
 
-const MOODS: { emoji: Mood; label: string; color: string }[] = [
-  { emoji: '🙂', label: 'Good', color: '#10B981' },
-  { emoji: '😐', label: 'Okay', color: '#F59E0B' },
-  { emoji: '😞', label: 'Down', color: '#6B7280' },
-  { emoji: '😠', label: 'Frustrated', color: '#EF4444' },
-  { emoji: '😴', label: 'Tired', color: '#8B5CF6' },
+const MOODS: { emoji: Mood; labelKey: string; color: string }[] = [
+  { emoji: '🙂', labelKey: 'Good', color: '#10B981' },
+  { emoji: '😐', labelKey: 'Okay', color: '#F59E0B' },
+  { emoji: '😞', labelKey: 'Down', color: '#6B7280' },
+  { emoji: '😠', labelKey: 'Frustrated', color: '#EF4444' },
+  { emoji: '😴', labelKey: 'Tired', color: '#8B5CF6' },
 ];
 
 interface MoodCheckInProps {
@@ -34,6 +35,7 @@ interface MoodCheckInProps {
 }
 
 export default function MoodCheckIn({ visible, onClose }: MoodCheckInProps) {
+  const { t, tError } = useTranslation();
   const todayMood = useMoodStore((state) => state.todayMood);
   const setMood = useMoodStore((state) => state.setMood);
   const logMoodActivity = useActivityStore((state) => state.logMoodActivity);
@@ -68,13 +70,13 @@ export default function MoodCheckIn({ visible, onClose }: MoodCheckInProps) {
 
     const result = await shareMoodViaWhatsApp(selectedMood);
 
-    if (!result.success && result.error) {
-      Alert.alert('Error', result.error);
+    if (!result.success) {
+      Alert.alert(t('Error'), tError(result.error));
     }
 
     setShowConfirmation(false);
     onClose();
-  }, [selectedMood, onClose]);
+  }, [selectedMood, onClose, t, tError]);
 
   const handleDone = useCallback(() => {
     setShowConfirmation(false);
@@ -109,9 +111,9 @@ export default function MoodCheckIn({ visible, onClose }: MoodCheckInProps) {
             <>
               {/* Header */}
               <View style={styles.header}>
-                <Text style={styles.title}>How are you today?</Text>
+                <Text style={styles.title}>{t('How are you today?')}</Text>
                 <Text style={styles.subtitle}>
-                  Check in with your mood — it takes 1 second
+                  {t('Check in with your mood — it takes 1 second')}
                 </Text>
               </View>
 
@@ -142,7 +144,7 @@ export default function MoodCheckIn({ visible, onClose }: MoodCheckInProps) {
                         selectedMood === mood.emoji && { color: mood.color },
                       ]}
                     >
-                      {mood.label}
+                      {t(mood.labelKey)}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -153,7 +155,7 @@ export default function MoodCheckIn({ visible, onClose }: MoodCheckInProps) {
                 <View style={styles.alreadySelected}>
                   <Ionicons name="checkmark-circle" size={16} color="#10B981" />
                   <Text style={styles.alreadySelectedText}>
-                    You checked in today
+                    {t('You checked in today')}
                   </Text>
                 </View>
               )}
@@ -165,9 +167,9 @@ export default function MoodCheckIn({ visible, onClose }: MoodCheckInProps) {
                 <View style={styles.confirmationIcon}>
                   <Text style={styles.confirmationEmoji}>{selectedMood}</Text>
                 </View>
-                <Text style={styles.confirmationTitle}>Mood recorded!</Text>
+                <Text style={styles.confirmationTitle}>{t('Mood recorded!')}</Text>
                 <Text style={styles.confirmationText}>
-                  Want to let your partner know how you're feeling?
+                  {t("Want to let your partner know how you're feeling?")}
                 </Text>
 
                 <View style={styles.confirmationButtons}>
@@ -176,11 +178,11 @@ export default function MoodCheckIn({ visible, onClose }: MoodCheckInProps) {
                     onPress={handleShare}
                   >
                     <Ionicons name="logo-whatsapp" size={20} color="#FFFFFF" />
-                    <Text style={styles.shareButtonText}>Share via WhatsApp</Text>
+                    <Text style={styles.shareButtonText}>{t('Share via WhatsApp')}</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
-                    <Text style={styles.doneButtonText}>Done</Text>
+                    <Text style={styles.doneButtonText}>{t('Done')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -194,6 +196,7 @@ export default function MoodCheckIn({ visible, onClose }: MoodCheckInProps) {
 
 // Small mood display for home screen card
 export function MoodDisplay() {
+  const { t } = useTranslation();
   const todayMood = useMoodStore((state) => state.todayMood);
 
   if (!todayMood) {
@@ -202,7 +205,7 @@ export function MoodDisplay() {
         <View style={displayStyles.emptyIcon}>
           <Ionicons name="happy-outline" size={24} color="#9CA3AF" />
         </View>
-        <Text style={displayStyles.emptyText}>Tap to check in</Text>
+        <Text style={displayStyles.emptyText}>{t('Tap to check in')}</Text>
       </View>
     );
   }
@@ -213,7 +216,7 @@ export function MoodDisplay() {
     <View style={displayStyles.container}>
       <Text style={displayStyles.emoji}>{todayMood}</Text>
       <Text style={[displayStyles.label, { color: moodData?.color }]}>
-        {moodData?.label}
+        {moodData ? t(moodData.labelKey) : ''}
       </Text>
       <View style={displayStyles.checkBadge}>
         <Ionicons name="checkmark" size={12} color="#10B981" />
@@ -224,9 +227,10 @@ export function MoodDisplay() {
 
 // Week mood view for recap
 export function WeekMoodView() {
+  const { t } = useTranslation();
   const getWeekMoods = useMoodStore((state) => state.getWeekMoods);
   const weekMoods = getWeekMoods();
-  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  const days = [t('Mon'), t('Tue'), t('Wed'), t('Thu'), t('Fri'), t('Sat'), t('Sun')];
 
   return (
     <View style={weekStyles.container}>

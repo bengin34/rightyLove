@@ -34,12 +34,14 @@ import {
   PHOTO_SHARE_TEMPLATES,
 } from '@/services/sharing';
 import type { Photo } from '@/types';
+import { useTranslation } from '@/i18n';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 48;
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
 
 export default function PhotoDeckScreen() {
+  const { t, tError } = useTranslation();
   const insets = useSafeAreaInsets();
   const storePhotos = usePhotoStore((state) => state.photos);
   const todayLikedCount = usePhotoStore((state) => state.todayLikedCount);
@@ -95,10 +97,10 @@ export default function PhotoDeckScreen() {
     const result = await pickImagesFromLibrary();
     setIsLoading(false);
 
-    if (!result.success && result.error) {
-      Alert.alert('Error', result.error);
+    if (!result.success) {
+      Alert.alert(t('Error'), tError(result.error));
     }
-  }, []);
+  }, [t, tError]);
 
   const handleLike = useCallback(() => {
     const photo = deckPhotos[currentIndex];
@@ -143,8 +145,8 @@ export default function PhotoDeckScreen() {
     setTimeout(async () => {
       const result = await sharePhoto(photo.localUri, photo.id);
 
-      if (!result.success && result.error) {
-        Alert.alert('Error', result.error);
+      if (!result.success) {
+        Alert.alert(t('Error'), tError(result.error));
         return;
       }
 
@@ -156,7 +158,7 @@ export default function PhotoDeckScreen() {
         rotation.value = 0;
       }, 300);
     }, 400);
-  }, [deckPhotos, currentIndex, translateX, translateY, rotation]);
+  }, [deckPhotos, currentIndex, translateX, translateY, rotation, t, tError]);
 
   const handleShareWithTemplate = useCallback(
     async (templateId: string) => {
@@ -166,7 +168,7 @@ export default function PhotoDeckScreen() {
       if (!photo || !template) return;
 
       // Copy message to clipboard first
-      await copyMessageToClipboard(template.message);
+      await copyMessageToClipboard(t(template.messageKey));
 
       // Close modal
       setShowShareModal(false);
@@ -182,8 +184,8 @@ export default function PhotoDeckScreen() {
         setTimeout(async () => {
           const result = await sharePhoto(photo.localUri, photo.id);
 
-          if (!result.success && result.error) {
-            Alert.alert('Error', result.error);
+          if (!result.success) {
+            Alert.alert(t('Error'), tError(result.error));
             return;
           }
 
@@ -197,7 +199,7 @@ export default function PhotoDeckScreen() {
         }, 100);
       }, 800);
     },
-    [currentIndex, deckPhotos, translateX, translateY, rotation]
+    [currentIndex, deckPhotos, translateX, translateY, rotation, t, tError]
   );
 
   const resetPosition = useCallback(() => {
@@ -302,7 +304,7 @@ export default function PhotoDeckScreen() {
             <Ionicons name="close" size={24} color="#1F2937" />
           </View>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Photo Deck</Text>
+        <Text style={styles.headerTitle}>{t('Photo Deck')}</Text>
         <TouchableOpacity
           style={styles.headerButton}
           onPress={handleAddPhotos}
@@ -318,11 +320,15 @@ export default function PhotoDeckScreen() {
       <View style={styles.statsBar}>
         <View style={styles.statItem}>
           <Ionicons name="heart" size={16} color="#FF6B9D" />
-          <Text style={styles.statText}>{todayLikedCount} liked today</Text>
+          <Text style={styles.statText}>
+            {t('{{count}} liked today', { count: todayLikedCount })}
+          </Text>
         </View>
         <View style={styles.statItem}>
           <Ionicons name="share-social" size={16} color="#8B5CF6" />
-          <Text style={styles.statText}>{todaySharedCount} shared today</Text>
+          <Text style={styles.statText}>
+            {t('{{count}} shared today', { count: todaySharedCount })}
+          </Text>
         </View>
       </View>
 
@@ -331,9 +337,9 @@ export default function PhotoDeckScreen() {
         {hasNoPhotos ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>📷</Text>
-            <Text style={styles.emptyTitle}>No photos yet</Text>
+            <Text style={styles.emptyTitle}>{t('No photos yet')}</Text>
             <Text style={styles.emptyText}>
-              Add photos from your gallery to start building your "Us" album
+              {t('Add photos from your gallery to start building your "Us" album')}
             </Text>
             <TouchableOpacity
               style={styles.addPhotosButton}
@@ -342,17 +348,18 @@ export default function PhotoDeckScreen() {
             >
               <Ionicons name="images" size={24} color="#FFFFFF" />
               <Text style={styles.addPhotosText}>
-                {isLoading ? 'Adding...' : 'Add Photos'}
+                {isLoading ? t('Adding...') : t('Add Photos')}
               </Text>
             </TouchableOpacity>
           </View>
         ) : isDeckEmpty ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>✨</Text>
-            <Text style={styles.emptyTitle}>All caught up!</Text>
+            <Text style={styles.emptyTitle}>{t('All caught up!')}</Text>
             <Text style={styles.emptyText}>
-              You've swiped through all your photos today. Come back tomorrow for
-              more memories!
+              {t(
+                "You've swiped through all your photos today. Come back tomorrow for more memories!"
+              )}
             </Text>
             <TouchableOpacity
               style={styles.addPhotosButton}
@@ -361,7 +368,7 @@ export default function PhotoDeckScreen() {
             >
               <Ionicons name="add-circle" size={24} color="#FFFFFF" />
               <Text style={styles.addPhotosText}>
-                {isLoading ? 'Adding...' : 'Add More Photos'}
+                {isLoading ? t('Adding...') : t('Add More Photos')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -403,7 +410,9 @@ export default function PhotoDeckScreen() {
             {deckPhotos.length - currentIndex > 1 && (
               <View style={styles.remainingIndicator}>
                 <Text style={styles.remainingText}>
-                  +{deckPhotos.length - currentIndex - 1} more
+                  {t('+{{count}} more', {
+                    count: deckPhotos.length - currentIndex - 1,
+                  })}
                 </Text>
               </View>
             )}
@@ -423,7 +432,7 @@ export default function PhotoDeckScreen() {
                   style={[styles.overlay, styles.likeOverlay, likeOverlayStyle]}
                 >
                   <Ionicons name="heart" size={80} color="#FFFFFF" />
-                  <Text style={styles.overlayText}>LIKE</Text>
+                  <Text style={styles.overlayText}>{t('LIKE')}</Text>
                 </Animated.View>
 
                 {/* Share overlay */}
@@ -431,7 +440,7 @@ export default function PhotoDeckScreen() {
                   style={[styles.overlay, styles.shareOverlay, shareOverlayStyle]}
                 >
                   <Ionicons name="share-social" size={80} color="#FFFFFF" />
-                  <Text style={styles.overlayText}>SHARE</Text>
+                  <Text style={styles.overlayText}>{t('SHARE')}</Text>
                 </Animated.View>
 
                 {/* Left swipe cute message (inside card) */}
@@ -439,9 +448,9 @@ export default function PhotoDeckScreen() {
                   style={[styles.overlay, styles.leftSwipeOverlay, leftSwipeMessageStyle]}
                 >
                   <Text style={styles.leftSwipeEmoji}>💕</Text>
-                  <Text style={styles.leftSwipeTitle}>Only love here</Text>
+                  <Text style={styles.leftSwipeTitle}>{t('Only love here')}</Text>
                   <Text style={styles.leftSwipeText}>
-                    In this app, you only have the right to love
+                    {t('In this app, you only have the right to love')}
                   </Text>
                 </Animated.View>
               </Animated.View>
@@ -460,16 +469,16 @@ export default function PhotoDeckScreen() {
       {/* Instructions */}
       {!hasNoPhotos && !isDeckEmpty && (
         <View style={styles.instructions}>
-          <View style={styles.instructionItem}>
-            <Ionicons name="arrow-forward" size={20} color="#FF6B9D" />
-            <Text style={styles.instructionText}>Swipe right to like</Text>
+            <View style={styles.instructionItem}>
+              <Ionicons name="arrow-forward" size={20} color="#FF6B9D" />
+              <Text style={styles.instructionText}>{t('Swipe right to like')}</Text>
+            </View>
+            <View style={styles.instructionItem}>
+              <Ionicons name="arrow-up" size={20} color="#8B5CF6" />
+              <Text style={styles.instructionText}>{t('Swipe up to share')}</Text>
+            </View>
           </View>
-          <View style={styles.instructionItem}>
-            <Ionicons name="arrow-up" size={20} color="#8B5CF6" />
-            <Text style={styles.instructionText}>Swipe up to share</Text>
-          </View>
-        </View>
-      )}
+        )}
 
       {/* Counter */}
       {!hasNoPhotos && !isDeckEmpty && (
@@ -492,9 +501,9 @@ export default function PhotoDeckScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Share with a message</Text>
+            <Text style={styles.modalTitle}>{t('Share with a message')}</Text>
             <Text style={styles.modalSubtitle}>
-              Tap to copy message, then paste it in WhatsApp
+              {t('Tap to copy message, then paste it in WhatsApp')}
             </Text>
 
             {PHOTO_SHARE_TEMPLATES.map((template) => (
@@ -505,8 +514,8 @@ export default function PhotoDeckScreen() {
               >
                 <View style={styles.templateContent}>
                   <View style={styles.templateTextContainer}>
-                    <Text style={styles.templateLabel}>{template.label}</Text>
-                    <Text style={styles.templateMessage}>{template.message}</Text>
+                    <Text style={styles.templateLabel}>{t(template.labelKey)}</Text>
+                    <Text style={styles.templateMessage}>{t(template.messageKey)}</Text>
                   </View>
                   <View style={styles.copyIcon}>
                     <Ionicons name="copy-outline" size={20} color="#8B5CF6" />
@@ -520,7 +529,7 @@ export default function PhotoDeckScreen() {
               onPress={handleShareWithoutMessage}
             >
               <Ionicons name="share-outline" size={20} color="#FFFFFF" />
-              <Text style={styles.shareWithoutMessageText}>Share without message</Text>
+              <Text style={styles.shareWithoutMessageText}>{t('Share without message')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -530,7 +539,7 @@ export default function PhotoDeckScreen() {
                 resetPosition();
               }}
             >
-              <Text style={styles.cancelText}>Cancel</Text>
+              <Text style={styles.cancelText}>{t('Cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -541,8 +550,8 @@ export default function PhotoDeckScreen() {
         <View style={styles.copiedOverlay} pointerEvents="none">
           <View style={styles.copiedContent}>
             <Ionicons name="checkmark-circle" size={48} color="#10B981" />
-            <Text style={styles.copiedText}>Message copied!</Text>
-            <Text style={styles.copiedSubtext}>Paste it in WhatsApp</Text>
+            <Text style={styles.copiedText}>{t('Message copied!')}</Text>
+            <Text style={styles.copiedSubtext}>{t('Paste it in WhatsApp')}</Text>
           </View>
         </View>
       )}

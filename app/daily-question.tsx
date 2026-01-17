@@ -24,10 +24,12 @@ import {
 } from '@/services/sharing';
 import { useCoupleStore } from '@/stores/coupleStore';
 import type { DailyResponse, QuestionStatus } from '@/types';
+import { useTranslation } from '@/i18n';
 
 const MAX_LENGTH = 500;
 
 export default function DailyQuestionScreen() {
+  const { t, tError } = useTranslation();
   const couple = useCoupleStore((state) => state.couple);
   const isPaired = couple?.memberB ? true : false;
 
@@ -73,18 +75,18 @@ export default function DailyQuestionScreen() {
       // Refresh to get updated state
       fetchDailyQuestion();
     } else {
-      Alert.alert('Error', result.error || 'Failed to submit answer');
+      Alert.alert(t('Error'), tError(result.error, 'Failed to submit answer'));
     }
-  }, [answer, isSubmitting]);
+  }, [answer, isSubmitting, t, tError]);
 
   const handleNudge = useCallback(async (templateId: string) => {
     setShowNudgeModal(false);
     const result = await sendNudgeViaWhatsApp(templateId);
 
     if (!result.success && result.error) {
-      Alert.alert('Error', result.error);
+      Alert.alert(t('Error'), tError(result.error));
     }
-  }, []);
+  }, [t, tError]);
 
   const handleShareHighlight = useCallback(async () => {
     if (!dailyData?.prompt?.question || !dailyData.myAnswer) return;
@@ -96,9 +98,9 @@ export default function DailyQuestionScreen() {
     );
 
     if (!result.success && result.error) {
-      Alert.alert('Error', result.error);
+      Alert.alert(t('Error'), tError(result.error));
     }
-  }, [dailyData]);
+  }, [dailyData, t, tError]);
 
   // Not paired state
   if (!isPaired) {
@@ -108,7 +110,7 @@ export default function DailyQuestionScreen() {
           <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
             <Ionicons name="close" size={28} color="#1F2937" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Daily Question</Text>
+          <Text style={styles.headerTitle}>{t('Daily Question')}</Text>
           <View style={styles.headerRight} />
         </View>
 
@@ -116,18 +118,18 @@ export default function DailyQuestionScreen() {
           <View style={styles.notPairedIcon}>
             <Ionicons name="people" size={64} color="#8B5CF6" />
           </View>
-          <Text style={styles.notPairedTitle}>Pair with your partner first</Text>
+          <Text style={styles.notPairedTitle}>{t('Pair with your partner first')}</Text>
           <Text style={styles.notPairedText}>
-            Daily questions require you to be paired with your partner. Once paired,
-            you'll both answer the same question each day and unlock each other's
-            answers!
+            {t(
+              "Daily questions require you to be paired with your partner. Once paired,\nyou'll both answer the same question each day and unlock each other's answers!"
+            )}
           </Text>
           <TouchableOpacity
             style={styles.pairButton}
             onPress={() => router.replace('/(onboarding)/pair-partner')}
           >
             <Ionicons name="link" size={20} color="#FFFFFF" />
-            <Text style={styles.pairButtonText}>Pair Now</Text>
+            <Text style={styles.pairButtonText}>{t('Pair Now')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -142,13 +144,13 @@ export default function DailyQuestionScreen() {
           <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
             <Ionicons name="close" size={28} color="#1F2937" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Daily Question</Text>
+          <Text style={styles.headerTitle}>{t('Daily Question')}</Text>
           <View style={styles.headerRight} />
         </View>
 
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#8B5CF6" />
-          <Text style={styles.loadingText}>Loading today's question...</Text>
+          <Text style={styles.loadingText}>{t("Loading today's question...")}</Text>
         </View>
       </SafeAreaView>
     );
@@ -162,18 +164,18 @@ export default function DailyQuestionScreen() {
           <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
             <Ionicons name="close" size={28} color="#1F2937" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Daily Question</Text>
+          <Text style={styles.headerTitle}>{t('Daily Question')}</Text>
           <View style={styles.headerRight} />
         </View>
 
         <View style={styles.errorContainer}>
           <Ionicons name="warning" size={64} color="#F59E0B" />
-          <Text style={styles.errorTitle}>No question available</Text>
+          <Text style={styles.errorTitle}>{t('No question available')}</Text>
           <Text style={styles.errorText}>
-            We couldn't load today's question. Please try again later.
+            {t("We couldn't load today's question. Please try again later.")}
           </Text>
           <TouchableOpacity style={styles.retryButton} onPress={fetchDailyQuestion}>
-            <Text style={styles.retryButtonText}>Try Again</Text>
+            <Text style={styles.retryButtonText}>{t('Try Again')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -193,7 +195,7 @@ export default function DailyQuestionScreen() {
           <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
             <Ionicons name="close" size={28} color="#1F2937" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Daily Question</Text>
+          <Text style={styles.headerTitle}>{t('Daily Question')}</Text>
           <View style={styles.headerRight} />
         </View>
 
@@ -225,7 +227,7 @@ export default function DailyQuestionScreen() {
             <View style={styles.answerSection}>
               <TextInput
                 style={styles.answerInput}
-                placeholder="Share your thoughts..."
+                placeholder={t('Share your thoughts...')}
                 placeholderTextColor="#9CA3AF"
                 multiline
                 value={answer}
@@ -253,11 +255,11 @@ export default function DailyQuestionScreen() {
                 {isSubmitting ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.submitButtonText}>Submit Answer</Text>
+                  <Text style={styles.submitButtonText}>{t('Submit Answer')}</Text>
                 )}
               </TouchableOpacity>
               <Text style={styles.disclaimer}>
-                Your answer can't be edited after submission
+                {t("Your answer can't be edited after submission")}
               </Text>
             </View>
           )}
@@ -267,11 +269,11 @@ export default function DailyQuestionScreen() {
             <View style={styles.waitingSection}>
               <View style={styles.statusBadge}>
                 <Ionicons name="checkmark-circle" size={24} color="#10B981" />
-                <Text style={styles.statusText}>You answered</Text>
+                <Text style={styles.statusText}>{t('You answered')}</Text>
               </View>
 
               <View style={styles.myAnswerPreview}>
-                <Text style={styles.myAnswerLabel}>Your answer:</Text>
+                <Text style={styles.myAnswerLabel}>{t('Your answer:')}</Text>
                 <Text style={styles.myAnswerText}>{dailyData.myAnswer.text}</Text>
               </View>
 
@@ -279,9 +281,9 @@ export default function DailyQuestionScreen() {
                 <View style={styles.waitingIcon}>
                   <Ionicons name="hourglass-outline" size={48} color="#F59E0B" />
                 </View>
-                <Text style={styles.waitingTitle}>Waiting for your partner</Text>
+                <Text style={styles.waitingTitle}>{t('Waiting for your partner')}</Text>
                 <Text style={styles.waitingText}>
-                  Once they answer, both responses will be revealed!
+                  {t('Once they answer, both responses will be revealed!')}
                 </Text>
               </View>
 
@@ -290,7 +292,7 @@ export default function DailyQuestionScreen() {
                 onPress={() => setShowNudgeModal(true)}
               >
                 <Ionicons name="notifications" size={20} color="#8B5CF6" />
-                <Text style={styles.nudgeButtonText}>Send a Nudge</Text>
+                <Text style={styles.nudgeButtonText}>{t('Send a Nudge')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -300,12 +302,12 @@ export default function DailyQuestionScreen() {
             <View style={styles.unlockedSection}>
               <View style={styles.unlockedBadge}>
                 <Ionicons name="lock-open" size={24} color="#10B981" />
-                <Text style={styles.unlockedBadgeText}>Unlocked!</Text>
+                <Text style={styles.unlockedBadgeText}>{t('Unlocked!')}</Text>
               </View>
 
               <View style={styles.answersContainer}>
                 <View style={styles.answerCard}>
-                  <Text style={styles.answerCardLabel}>Your answer</Text>
+                  <Text style={styles.answerCardLabel}>{t('Your answer')}</Text>
                   <Text style={styles.answerCardText}>{dailyData.myAnswer.text}</Text>
                 </View>
 
@@ -317,7 +319,7 @@ export default function DailyQuestionScreen() {
 
                 {dailyData.partnerAnswer && (
                   <View style={[styles.answerCard, styles.partnerAnswerCard]}>
-                    <Text style={styles.answerCardLabel}>Partner's answer</Text>
+                    <Text style={styles.answerCardLabel}>{t("Partner's answer")}</Text>
                     <Text style={styles.answerCardText}>
                       {dailyData.partnerAnswer.text}
                     </Text>
@@ -327,7 +329,7 @@ export default function DailyQuestionScreen() {
 
               <TouchableOpacity style={styles.shareButton} onPress={handleShareHighlight}>
                 <Ionicons name="share-social" size={20} color="#FFFFFF" />
-                <Text style={styles.shareButtonText}>Share Highlight</Text>
+                <Text style={styles.shareButtonText}>{t('Share Highlight')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -338,12 +340,12 @@ export default function DailyQuestionScreen() {
               <View style={styles.missedIcon}>
                 <Ionicons name="sad-outline" size={64} color="#9CA3AF" />
               </View>
-              <Text style={styles.missedTitle}>Not unlocked today</Text>
+              <Text style={styles.missedTitle}>{t('Not unlocked today')}</Text>
               <Text style={styles.missedText}>
-                One of you didn't answer in time. Try again tomorrow!
+                {t("One of you didn't answer in time. Try again tomorrow!")}
               </Text>
               <TouchableOpacity style={styles.okButton} onPress={() => router.back()}>
-                <Text style={styles.okButtonText}>Got it</Text>
+                <Text style={styles.okButtonText}>{t('Got it')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -359,9 +361,9 @@ export default function DailyQuestionScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Send a nudge</Text>
+            <Text style={styles.modalTitle}>{t('Send a nudge')}</Text>
             <Text style={styles.modalSubtitle}>
-              Choose a message to remind your partner
+              {t('Choose a message to remind your partner')}
             </Text>
 
             {NUDGE_TEMPLATES.map((template) => (
@@ -370,8 +372,8 @@ export default function DailyQuestionScreen() {
                 style={styles.templateButton}
                 onPress={() => handleNudge(template.id)}
               >
-                <Text style={styles.templateLabel}>{template.label}</Text>
-                <Text style={styles.templateMessage}>{template.message}</Text>
+                <Text style={styles.templateLabel}>{t(template.labelKey)}</Text>
+                <Text style={styles.templateMessage}>{t(template.messageKey)}</Text>
               </TouchableOpacity>
             ))}
 
@@ -379,7 +381,7 @@ export default function DailyQuestionScreen() {
               style={styles.cancelButton}
               onPress={() => setShowNudgeModal(false)}
             >
-              <Text style={styles.cancelText}>Cancel</Text>
+              <Text style={styles.cancelText}>{t('Cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>

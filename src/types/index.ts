@@ -200,7 +200,7 @@ export interface NotificationSettings {
 // ============================================
 
 export interface AppSettings {
-  language: 'en' | 'tr'; // Expandable
+  language: 'en' | 'tr' | 'de' | 'it' | 'fr' | 'es'; // Expandable
   notifications: NotificationSettings;
   theme: 'light' | 'dark' | 'system';
 }

@@ -95,7 +95,8 @@ export async function getDailyQuestion(): Promise<{
         .single();
 
       if (createError) {
-        return { success: false, error: createError.message };
+        console.error('[getDailyQuestion] Create prompt error:', createError);
+        return { success: false, error: 'Failed to get daily question' };
       }
 
       // Record this question in history to prevent repeats
@@ -103,7 +104,8 @@ export async function getDailyQuestion(): Promise<{
 
       prompt = newPrompt;
     } else if (promptError) {
-      return { success: false, error: promptError.message };
+      console.error('[getDailyQuestion] Fetch prompt error:', promptError);
+      return { success: false, error: 'Failed to get daily question' };
     }
 
     // Get answers for this prompt
@@ -114,7 +116,8 @@ export async function getDailyQuestion(): Promise<{
       .eq('date_key', dateKey);
 
     if (answersError) {
-      return { success: false, error: answersError.message };
+      console.error('[getDailyQuestion] Fetch answers error:', answersError);
+      return { success: false, error: 'Failed to get daily question' };
     }
 
     const myAnswer = answers?.find((a) => a.user_id === user.id);
@@ -214,7 +217,8 @@ export async function submitAnswer(
       .single();
 
     if (error) {
-      return { success: false, error: error.message };
+      console.error('[submitAnswer] Insert error:', error);
+      return { success: false, error: 'Failed to submit answer' };
     }
 
     // Log activity

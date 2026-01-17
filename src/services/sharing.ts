@@ -4,23 +4,25 @@ import { Share } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { File } from 'expo-file-system';
 import { markPhotoAsShared } from './photo';
+import { translate } from '@/i18n';
+import { useAppSettingsStore } from '@/stores/appSettingsStore';
 
 // WhatsApp message templates for photo sharing
 export const PHOTO_SHARE_TEMPLATES = [
   {
     id: 'thinking',
-    label: 'Thinking of you',
-    message: 'This photo reminded me of you 💕',
+    labelKey: 'Thinking of you',
+    messageKey: 'This photo reminded me of you 💕',
   },
   {
     id: 'remember',
-    label: 'Remember this?',
-    message: 'Remember this moment? 🥰',
+    labelKey: 'Remember this?',
+    messageKey: 'Remember this moment? 🥰',
   },
   {
     id: 'love',
-    label: 'I love us',
-    message: 'I love looking at our photos together ❤️',
+    labelKey: 'I love us',
+    messageKey: 'I love looking at our photos together ❤️',
   },
 ];
 
@@ -37,20 +39,25 @@ export const MOOD_SHARE_TEMPLATES = {
 export const NUDGE_TEMPLATES = [
   {
     id: 'gentle',
-    label: 'Gentle reminder',
-    message: 'Hey! I answered today\'s question on RightyLove. Can\'t wait to see yours! 💭',
+    labelKey: 'Gentle reminder',
+    messageKey:
+      "Hey! I answered today's question on RightyLove. Can't wait to see yours! 💭",
   },
   {
     id: 'curious',
-    label: 'Curious',
-    message: 'I\'m so curious what your answer will be! Check out today\'s question on RightyLove 💕',
+    labelKey: 'Curious',
+    messageKey:
+      "I'm so curious what your answer will be! Check out today's question on RightyLove 💕",
   },
   {
     id: 'unlock',
-    label: 'Let\'s unlock it',
-    message: 'There\'s a question waiting for us on RightyLove! Let\'s both answer to unlock it 🔓',
+    labelKey: "Let's unlock it",
+    messageKey:
+      "There's a question waiting for us on RightyLove! Let's both answer to unlock it 🔓",
   },
 ];
+
+const getLanguage = () => useAppSettingsStore.getState().language;
 
 // Check if WhatsApp is available
 export async function isWhatsAppAvailable(): Promise<boolean> {
@@ -103,7 +110,7 @@ export async function sharePhoto(
     console.log('[sharePhoto] Opening share sheet...');
     await Sharing.shareAsync(photoUri, {
       mimeType,
-      dialogTitle: 'Share photo',
+      dialogTitle: translate(getLanguage(), 'Share photo'),
       UTI: uti,
     });
     console.log('[sharePhoto] Share sheet closed');
@@ -152,7 +159,8 @@ export async function openWhatsAppWithMessage(
 export async function shareMoodViaWhatsApp(
   mood: keyof typeof MOOD_SHARE_TEMPLATES
 ): Promise<{ success: boolean; error?: string }> {
-  const message = MOOD_SHARE_TEMPLATES[mood];
+  const language = getLanguage();
+  const message = translate(language, MOOD_SHARE_TEMPLATES[mood]);
   return openWhatsAppWithMessage(message);
 }
 
@@ -165,7 +173,8 @@ export async function sendNudgeViaWhatsApp(
     return { success: false, error: 'Invalid template' };
   }
 
-  return openWhatsAppWithMessage(template.message);
+  const message = translate(getLanguage(), template.messageKey);
+  return openWhatsAppWithMessage(message);
 }
 
 // Share daily question answer highlight
@@ -174,10 +183,20 @@ export async function shareAnswerHighlight(
   myAnswer: string,
   partnerAnswer?: string
 ): Promise<{ success: boolean; error?: string }> {
-  let message = `💕 Today's Question on RightyLove:\n\n"${question}"\n\nMy answer: "${myAnswer}"`;
+  const language = getLanguage();
+  let message = translate(
+    language,
+    '💕 Today\'s Question on RightyLove:\n\n"{{question}}"\n\nMy answer: "{{myAnswer}}"',
+    {
+      question,
+      myAnswer,
+    }
+  );
 
   if (partnerAnswer) {
-    message += `\n\nTheir answer: "${partnerAnswer}"`;
+    message += translate(language, '\n\nTheir answer: "{{partnerAnswer}}"', {
+      partnerAnswer,
+    });
   }
 
   message += '\n\n#RightyLove';
@@ -185,7 +204,7 @@ export async function shareAnswerHighlight(
   try {
     await Share.share({
       message,
-      title: 'Share Highlight',
+      title: translate(language, 'Share Highlight'),
     });
     return { success: true };
   } catch (err) {
@@ -201,12 +220,16 @@ export async function shareWeeklyRecap(
   questionsUnlocked: number,
   bucketItemsCompleted: number
 ): Promise<{ success: boolean; error?: string }> {
-  const message = `📊 Our Week on RightyLove:\n\n` +
-    `✅ Active days: ${activeDays}/7\n` +
-    `❤️ Photos liked: ${photosLiked}\n` +
-    `🔓 Questions unlocked: ${questionsUnlocked}\n` +
-    `🎯 Bucket items completed: ${bucketItemsCompleted}\n\n` +
-    `#RightyLove #Couple`;
+  const message = translate(
+    getLanguage(),
+    '📊 Our Week on RightyLove:\n\n✅ Active days: {{activeDays}}/7\n❤️ Photos liked: {{photosLiked}}\n🔓 Questions unlocked: {{questionsUnlocked}}\n🎯 Bucket items completed: {{bucketItemsCompleted}}\n\n#RightyLove #Couple',
+    {
+      activeDays,
+      photosLiked,
+      questionsUnlocked,
+      bucketItemsCompleted,
+    }
+  );
 
   return openWhatsAppWithMessage(message);
 }
@@ -222,7 +245,11 @@ export async function shareBucketCompletion(
     movies: '🎬',
   }[category] || '🎯';
 
-  const message = `${categoryEmoji} We did it!\n\nJust completed: "${itemText}"\n\n#RightyLove #BucketList`;
+  const message = translate(
+    getLanguage(),
+    '{{emoji}} We did it!\n\nJust completed: "{{itemText}}"\n\n#RightyLove #BucketList',
+    { emoji: categoryEmoji, itemText }
+  );
 
   return openWhatsAppWithMessage(message);
 }

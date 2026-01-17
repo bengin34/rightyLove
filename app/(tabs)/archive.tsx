@@ -6,13 +6,15 @@ import { useActivityStore } from '@/stores/activityStore';
 import { useMoodStore } from '@/stores/moodStore';
 import { usePhotoStore } from '@/stores/photoStore';
 import { useBucketStore } from '@/stores/bucketStore';
+import { getLocale, useTranslation } from '@/i18n';
 
-const formatWeekDate = (dateString: string): string => {
+const formatWeekDate = (dateString: string, locale: string): string => {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
 };
 
 export default function ArchiveScreen() {
+  const { t, language } = useTranslation();
   // Get data from stores
   const { streak, getWeeklyRecap } = useActivityStore();
   const { getWeekMoods } = useMoodStore();
@@ -39,7 +41,16 @@ export default function ArchiveScreen() {
   const handleShareRecap = async () => {
     try {
       await Share.share({
-        message: `My RightyLove week 💕\n\n🔥 ${streak.currentStreak} day streak\n📷 ${currentWeekRecap.photosLiked} photos liked\n💌 ${currentWeekRecap.photosShared} photos shared\n💬 ${currentWeekRecap.questionsUnlocked} questions unlocked\n✅ ${currentWeekRecap.bucketItemsCompleted} bucket list items done\n\nDownload: https://rightylove.app`,
+        message: t(
+          'My RightyLove week 💕\n\n🔥 {{streak}} day streak\n📷 {{liked}} photos liked\n💌 {{shared}} photos shared\n💬 {{unlocked}} questions unlocked\n✅ {{completed}} bucket list items done\n\nDownload: https://rightylove.app',
+          {
+            streak: streak.currentStreak,
+            liked: currentWeekRecap.photosLiked,
+            shared: currentWeekRecap.photosShared,
+            unlocked: currentWeekRecap.questionsUnlocked,
+            completed: currentWeekRecap.bucketItemsCompleted,
+          }
+        ),
       });
     } catch (error) {
       console.error('Error sharing:', error);
@@ -51,9 +62,11 @@ export default function ArchiveScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Your Archive</Text>
+          <Text style={styles.title}>{t('Your Archive')}</Text>
           <Text style={styles.subtitle}>
-            Week of {formatWeekDate(currentWeekRecap.weekStartDate)}
+            {t('Week of {{date}}', {
+              date: formatWeekDate(currentWeekRecap.weekStartDate, getLocale(language)),
+            })}
           </Text>
         </View>
 
@@ -64,17 +77,17 @@ export default function ArchiveScreen() {
           </View>
           <View style={styles.streakInfo}>
             <Text style={styles.streakNumber}>{streak.currentStreak}</Text>
-            <Text style={styles.streakLabel}>Day Streak</Text>
+            <Text style={styles.streakLabel}>{t('Day Streak')}</Text>
           </View>
           <View style={styles.streakStats}>
             <View style={styles.streakStat}>
               <Text style={styles.streakStatValue}>{streak.activeDaysThisWeek}/7</Text>
-              <Text style={styles.streakStatLabel}>This week</Text>
+              <Text style={styles.streakStatLabel}>{t('This week')}</Text>
             </View>
             {streak.coupleUnlockStreak !== undefined && streak.coupleUnlockStreak > 0 && (
               <View style={[styles.streakStat, { marginTop: 8 }]}>
                 <Text style={styles.streakStatValue}>{streak.coupleUnlockStreak}</Text>
-                <Text style={styles.streakStatLabel}>Unlocks</Text>
+                <Text style={styles.streakStatLabel}>{t('Unlocks')}</Text>
               </View>
             )}
           </View>
@@ -85,72 +98,72 @@ export default function ArchiveScreen() {
           <View style={styles.longestStreakBadge}>
             <Ionicons name="trophy" size={16} color="#F59E0B" />
             <Text style={styles.longestStreakText}>
-              Longest streak: {streak.longestStreak} days
+              {t('Longest streak: {{count}} days', { count: streak.longestStreak })}
             </Text>
           </View>
         )}
 
         {/* Weekly Stats */}
-        <Text style={styles.sectionTitle}>This Week's Activity</Text>
+        <Text style={styles.sectionTitle}>{t("This Week's Activity")}</Text>
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
             <Text style={styles.statEmoji}>📷</Text>
             <Text style={styles.statValue}>{currentWeekRecap.photosLiked}</Text>
-            <Text style={styles.statLabel}>Photos Liked</Text>
+            <Text style={styles.statLabel}>{t('Photos Liked')}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statEmoji}>💌</Text>
             <Text style={styles.statValue}>{currentWeekRecap.photosShared}</Text>
-            <Text style={styles.statLabel}>Photos Shared</Text>
+            <Text style={styles.statLabel}>{t('Photos Shared')}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statEmoji}>💬</Text>
             <Text style={styles.statValue}>{currentWeekRecap.questionsAnswered}</Text>
-            <Text style={styles.statLabel}>Answered</Text>
+            <Text style={styles.statLabel}>{t('Answered')}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statEmoji}>🔓</Text>
             <Text style={styles.statValue}>{currentWeekRecap.questionsUnlocked}</Text>
-            <Text style={styles.statLabel}>Unlocked</Text>
+            <Text style={styles.statLabel}>{t('Unlocked')}</Text>
           </View>
         </View>
 
         {/* Mood Summary */}
-        <Text style={styles.sectionTitle}>Mood This Week</Text>
+        <Text style={styles.sectionTitle}>{t('Mood This Week')}</Text>
         <View style={styles.moodCard}>
-          <View style={styles.moodRow}>
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
-              <View key={day} style={styles.moodDay}>
-                <Text style={styles.moodDayLabel}>{day}</Text>
-                <Text style={styles.moodDayEmoji}>
-                  {weekMoods[index] || '•'}
-                </Text>
-              </View>
-            ))}
-          </View>
+        <View style={styles.moodRow}>
+          {[t('Mon'), t('Tue'), t('Wed'), t('Thu'), t('Fri'), t('Sat'), t('Sun')].map((day, index) => (
+            <View key={day} style={styles.moodDay}>
+              <Text style={styles.moodDayLabel}>{day}</Text>
+              <Text style={styles.moodDayEmoji}>
+                {weekMoods[index] || '•'}
+              </Text>
+            </View>
+          ))}
+        </View>
         </View>
 
         {/* Bucket List Progress */}
-        <Text style={styles.sectionTitle}>Bucket List</Text>
+        <Text style={styles.sectionTitle}>{t('Bucket List')}</Text>
         <View style={styles.bucketCard}>
           <View style={styles.bucketIconRow}>
             <Text style={styles.bucketEmoji}>✅</Text>
             <Text style={styles.bucketValue}>{currentWeekRecap.bucketItemsCompleted}</Text>
           </View>
-          <Text style={styles.bucketLabel}>Items completed this week</Text>
+          <Text style={styles.bucketLabel}>{t('Items completed this week')}</Text>
         </View>
 
         {/* Share Button */}
         <TouchableOpacity style={styles.shareButton} onPress={handleShareRecap}>
           <Ionicons name="share-social" size={20} color="#FFFFFF" />
-          <Text style={styles.shareButtonText}>Share Weekly Recap</Text>
+          <Text style={styles.shareButtonText}>{t('Share Weekly Recap')}</Text>
         </TouchableOpacity>
 
         {/* Empty state for past weeks - will be populated when we have history */}
-        <Text style={styles.sectionTitle}>Past Weeks</Text>
+        <Text style={styles.sectionTitle}>{t('Past Weeks')}</Text>
         <View style={styles.emptyPastWeeks}>
           <Text style={styles.emptyPastWeeksText}>
-            Your weekly history will appear here
+            {t('Your weekly history will appear here')}
           </Text>
         </View>
 

@@ -12,21 +12,23 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { storage } from '@/lib/storage';
 import { sendMagicLink } from '@/services/auth';
+import { useTranslation } from '@/i18n';
 
 export default function LoginScreen() {
+  const { t, tError } = useTranslation();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSendMagicLink = async () => {
     if (!email.trim()) {
-      setError('Please enter your email');
+      setError(t('Please enter your email'));
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('Please enter a valid email');
+      setError(t('Please enter a valid email'));
       return;
     }
 
@@ -37,15 +39,15 @@ export default function LoginScreen() {
       const result = await sendMagicLink(email.trim().toLowerCase());
 
       if (!result.success) {
-        setError(result.error || 'Failed to send magic link');
+        setError(tError(result.error, 'Failed to send magic link'));
         return;
       }
 
       // Store email for verification screen
       storage.set('pending_email', email.trim().toLowerCase());
-      router.push('/(auth)/verify');
+      router.push('/(auth)/magic-link-info');
     } catch (err) {
-      setError('Something went wrong. Please try again.');
+      setError(t('Something went wrong. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -76,7 +78,7 @@ export default function LoginScreen() {
                 marginBottom: 8,
               }}
             >
-              RightyLove
+              {t('RightyLove')}
             </Text>
             <Text
               style={{
@@ -85,7 +87,7 @@ export default function LoginScreen() {
                 textAlign: 'center',
               }}
             >
-              Connect with your partner,{'\n'}one moment at a time
+              {t('Connect with your partner,\none moment at a time')}
             </Text>
           </View>
 
@@ -99,7 +101,7 @@ export default function LoginScreen() {
                 marginBottom: 8,
               }}
             >
-              Email
+              {t('Email')}
             </Text>
             <TextInput
               value={email}
@@ -107,8 +109,8 @@ export default function LoginScreen() {
                 setEmail(text);
                 setError('');
               }}
-              placeholder="your@email.com"
               placeholderTextColor="#999"
+              placeholder={t('your@email.com')}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -157,7 +159,7 @@ export default function LoginScreen() {
                   fontWeight: '600',
                 }}
               >
-                Send Magic Link
+                {t('Send Magic Link')}
               </Text>
             )}
           </TouchableOpacity>
@@ -171,7 +173,7 @@ export default function LoginScreen() {
               marginTop: 16,
             }}
           >
-            We'll send you a magic link to sign in.{'\n'}No password needed!
+            {t("We'll send you a magic link to sign in.\nNo password needed!")}
           </Text>
         </View>
       </KeyboardAvoidingView>

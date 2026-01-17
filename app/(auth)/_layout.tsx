@@ -10,6 +10,7 @@ export default function AuthLayout() {
       }}
     >
       <Stack.Screen name="login" />
+      <Stack.Screen name="magic-link-info" />
       <Stack.Screen name="verify" />
     </Stack>
   );

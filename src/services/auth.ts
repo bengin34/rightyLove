@@ -35,7 +35,8 @@ export async function sendMagicLink(email: string): Promise<{ success: boolean; 
     });
 
     if (error) {
-      return { success: false, error: error.message };
+      console.error('[sendMagicLink] Error:', error);
+      return { success: false, error: 'Failed to send magic link' };
     }
 
     return { success: true };
@@ -57,7 +58,8 @@ export async function verifyOtp(
     });
 
     if (error) {
-      return { success: false, error: error.message };
+      console.error('[verifyOtp] Error:', error);
+      return { success: false, error: 'Verification failed' };
     }
 
     if (!data.user) {
@@ -109,7 +111,8 @@ export async function signOut(): Promise<{ success: boolean; error?: string }> {
   try {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      return { success: false, error: error.message };
+      console.error('[signOut] Error:', error);
+      return { success: false, error: 'Sign out failed' };
     }
 
     // Clear auth store

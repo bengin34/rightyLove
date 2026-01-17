@@ -5,10 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
 import { useCouple } from '@/hooks/useCouple';
 import { getCurrentCouple } from '@/services/couple';
+import { useTranslation } from '@/i18n';
 
 type Mode = 'create' | 'join';
 
 export default function PairPartnerScreen() {
+  const { t, tError } = useTranslation();
   const [mode, setMode] = useState<Mode>('create');
   const [joinCode, setJoinCode] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export default function PairPartnerScreen() {
   const handleShare = async () => {
     try {
       if (isCoupleFull) {
-        Alert.alert('Already connected', 'You are already paired with your partner.');
+        Alert.alert(t('Already connected'), t('You are already paired with your partner.'));
         return;
       }
 
@@ -59,19 +61,21 @@ export default function PairPartnerScreen() {
       if (!codeToShare) {
         const result = await createCouple();
         if (!result.success) {
-          setErrorMessage(result.error || 'Failed to create invite code');
+          setErrorMessage(tError(result.error, 'Failed to create invite code'));
           return;
         }
         codeToShare = result.couple?.inviteCode || null;
       }
 
       if (!codeToShare) {
-        setErrorMessage('Invite code is not ready yet. Please try again.');
+        setErrorMessage(t('Invite code is not ready yet. Please try again.'));
         return;
       }
 
       await Share.share({
-        message: `Join me on RightyLove! 💕\n\nUse this code to connect: ${codeToShare}\n\nOr download the app: https://rightylove.app`,
+        message: t('Join me on RightyLove! 💕\n\nUse this code to connect: {{code}}\n\nOr download the app: https://rightylove.app', {
+          code: codeToShare,
+        }),
       });
     } catch (error) {
       console.error('Error sharing:', error);
@@ -82,14 +86,14 @@ export default function PairPartnerScreen() {
     const cleanedCode = joinCode.trim();
     if (cleanedCode.length < 6) return;
     if (isCoupleFull) {
-      Alert.alert('Already connected', 'You are already paired with your partner.');
+      Alert.alert(t('Already connected'), t('You are already paired with your partner.'));
       return;
     }
 
     setErrorMessage(null);
     const result = await joinCouple(cleanedCode);
     if (!result.success) {
-      setErrorMessage(result.error || 'Failed to join partner');
+      setErrorMessage(tError(result.error, 'Failed to join partner'));
       return;
     }
 
@@ -111,7 +115,7 @@ export default function PairPartnerScreen() {
     if (!couple) {
       createCouple().then((result) => {
         if (!result.success) {
-          setErrorMessage(result.error || 'Failed to create invite code');
+          setErrorMessage(tError(result.error, 'Failed to create invite code'));
           return;
         }
         router.replace('/(tabs)');
@@ -125,9 +129,9 @@ export default function PairPartnerScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Connect with your partner</Text>
+        <Text style={styles.title}>{t('Connect with your partner')}</Text>
         <Text style={styles.subtitle}>
-          Pair up to unlock the Daily Question feature
+          {t('Pair up to unlock the Daily Question feature')}
         </Text>
 
         <View style={styles.modeToggle}>
@@ -138,7 +142,7 @@ export default function PairPartnerScreen() {
             <Text
               style={[styles.modeButtonText, mode === 'create' && styles.modeButtonTextActive]}
             >
-              Create Invite
+              {t('Create Invite')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -148,7 +152,7 @@ export default function PairPartnerScreen() {
             <Text
               style={[styles.modeButtonText, mode === 'join' && styles.modeButtonTextActive]}
             >
-              Join Partner
+              {t('Join Partner')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -164,10 +168,10 @@ export default function PairPartnerScreen() {
                   backgroundColor="#FFFFFF"
                 />
               ) : (
-                <Text style={styles.codeLoading}>Generate an invite code to share</Text>
+                <Text style={styles.codeLoading}>{t('Generate an invite code to share')}</Text>
               )}
             </View>
-            <Text style={styles.codeLabel}>Your invite code</Text>
+            <Text style={styles.codeLabel}>{t('Your invite code')}</Text>
             <Text style={styles.codeValue}>{inviteCode || '------'}</Text>
             <TouchableOpacity
               style={[styles.shareButton, isCoupleFull && styles.shareButtonDisabled]}
@@ -175,26 +179,26 @@ export default function PairPartnerScreen() {
               disabled={isCoupleFull || isLoading}
             >
               <Text style={styles.shareButtonText}>
-                {inviteCode ? 'Share with Partner' : 'Generate Invite Code'}
+                {inviteCode ? t('Share with Partner') : t('Generate Invite Code')}
               </Text>
             </TouchableOpacity>
             <Text style={styles.shareHint}>
-              Your partner can scan the QR code or enter the code above
+              {t('Your partner can scan the QR code or enter the code above')}
             </Text>
             {inviteCode && (
               <Text style={styles.pairStatusText}>
-                {isCoupleFull ? 'Partner connected!' : 'Waiting for your partner to join...'}
+                {isCoupleFull ? t('Partner connected!') : t('Waiting for your partner to join...')}
               </Text>
             )}
           </View>
         ) : (
           <View style={styles.joinSection}>
-            <Text style={styles.inputLabel}>Enter your partner's code</Text>
+            <Text style={styles.inputLabel}>{t("Enter your partner's code")}</Text>
             <TextInput
               style={styles.codeInput}
               value={joinCode}
               onChangeText={(text) => setJoinCode(text.toUpperCase())}
-              placeholder="ABC123"
+              placeholder={t('ABC123')}
               placeholderTextColor="#9CA3AF"
               autoCapitalize="characters"
               maxLength={6}
@@ -208,7 +212,7 @@ export default function PairPartnerScreen() {
               disabled={joinCode.length < 6 || isLoading}
             >
               <Text style={styles.joinButtonText}>
-                {isLoading ? 'Connecting...' : 'Join Partner'}
+                {isLoading ? t('Connecting...') : t('Join Partner')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -218,15 +222,15 @@ export default function PairPartnerScreen() {
       <View style={styles.footer}>
         {mode === 'create' && (
           <TouchableOpacity style={styles.continueButton} onPress={handleCreateAndContinue}>
-            <Text style={styles.continueButtonText}>Continue</Text>
+            <Text style={styles.continueButtonText}>{t('Continue')}</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity onPress={handleSkip}>
-          <Text style={styles.skipText}>I'll pair later</Text>
+          <Text style={styles.skipText}>{t("I'll pair later")}</Text>
         </TouchableOpacity>
         {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
         <Text style={styles.hintText}>
-          You can still use the app, but Daily Question requires a paired partner
+          {t('You can still use the app, but Daily Question requires a paired partner')}
         </Text>
       </View>
     </SafeAreaView>

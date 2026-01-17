@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from '@/i18n';
 
 type TabIconProps = {
   name: keyof typeof Ionicons.glyphMap;
@@ -19,6 +20,7 @@ function TabIcon({ name, color, focused }: TabIconProps) {
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   return (
     <Tabs
@@ -40,7 +42,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('Home'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name={focused ? 'home' : 'home-outline'} color={color} focused={focused} />
           ),
@@ -49,7 +51,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="bucket-list"
         options={{
-          title: 'Bucket List',
+          title: t('Bucket List'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name={focused ? 'list' : 'list-outline'} color={color} focused={focused} />
           ),
@@ -58,7 +60,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="archive"
         options={{
-          title: 'Archive',
+          title: t('Archive'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name={focused ? 'calendar' : 'calendar-outline'} color={color} focused={focused} />
           ),
@@ -67,7 +69,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
+          title: t('Settings'),
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name={focused ? 'settings' : 'settings-outline'} color={color} focused={focused} />
           ),

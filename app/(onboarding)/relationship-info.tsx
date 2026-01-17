@@ -2,25 +2,27 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from '@/i18n';
 
 type RelationshipType = 'dating' | 'married' | 'long-distance';
 type Duration = '<1' | '1-3' | '3-5' | '5+';
 
 export default function RelationshipInfoScreen() {
+  const { t } = useTranslation();
   const [relationshipType, setRelationshipType] = useState<RelationshipType | null>(null);
   const [duration, setDuration] = useState<Duration | null>(null);
 
   const relationshipOptions: { value: RelationshipType; label: string; emoji: string }[] = [
-    { value: 'dating', label: 'Dating', emoji: '💕' },
-    { value: 'married', label: 'Married', emoji: '💍' },
-    { value: 'long-distance', label: 'Long Distance', emoji: '✈️' },
+    { value: 'dating', label: t('Dating'), emoji: '💕' },
+    { value: 'married', label: t('Married'), emoji: '💍' },
+    { value: 'long-distance', label: t('Long Distance'), emoji: '✈️' },
   ];
 
   const durationOptions: { value: Duration; label: string }[] = [
-    { value: '<1', label: 'Less than 1 year' },
-    { value: '1-3', label: '1-3 years' },
-    { value: '3-5', label: '3-5 years' },
-    { value: '5+', label: '5+ years' },
+    { value: '<1', label: t('Less than 1 year') },
+    { value: '1-3', label: t('1-3 years') },
+    { value: '3-5', label: t('3-5 years') },
+    { value: '5+', label: t('5+ years') },
   ];
 
   const handleContinue = () => {
@@ -32,10 +34,10 @@ export default function RelationshipInfoScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Tell us about your relationship</Text>
-        <Text style={styles.subtitle}>This helps us personalize your daily questions</Text>
+        <Text style={styles.title}>{t('Tell us about your relationship')}</Text>
+        <Text style={styles.subtitle}>{t('This helps us personalize your daily questions')}</Text>
 
-        <Text style={styles.sectionTitle}>Relationship Type</Text>
+        <Text style={styles.sectionTitle}>{t('Relationship Type')}</Text>
         <View style={styles.optionsRow}>
           {relationshipOptions.map((option) => (
             <TouchableOpacity
@@ -59,7 +61,7 @@ export default function RelationshipInfoScreen() {
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>How long have you been together?</Text>
+        <Text style={styles.sectionTitle}>{t('How long have you been together?')}</Text>
         <View style={styles.durationOptions}>
           {durationOptions.map((option) => (
             <TouchableOpacity
@@ -89,9 +91,9 @@ export default function RelationshipInfoScreen() {
           onPress={handleContinue}
           disabled={!relationshipType}
         >
-          <Text style={styles.continueButtonText}>Continue</Text>
+          <Text style={styles.continueButtonText}>{t('Continue')}</Text>
         </TouchableOpacity>
-        <Text style={styles.skipText}>Duration is optional</Text>
+        <Text style={styles.skipText}>{t('Duration is optional')}</Text>
       </View>
     </SafeAreaView>
   );

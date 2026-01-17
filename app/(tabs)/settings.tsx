@@ -8,7 +8,6 @@ import {
   Switch,
   Alert,
   Share,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,30 +20,34 @@ import { useBucketStore } from '@/stores/bucketStore';
 import { useActivityStore } from '@/stores/activityStore';
 import { signOut } from '@/services/auth';
 import * as Linking from 'expo-linking';
+import { getLocale, useTranslation, languageLabels } from '@/i18n';
 
 export default function SettingsScreen() {
+  const { t, language, setLanguage } = useTranslation();
   const { user, onboarding, logout: clearAuth } = useAuthStore();
   const { couple, isPaired, inviteCode, unpair } = useCoupleStore();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // Format notification time
+  const formatTime = (date: Date) =>
+    date.toLocaleTimeString(getLocale(language), {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+
   const notificationTime = onboarding.notificationTime
-    ? new Date(onboarding.notificationTime).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-      })
-    : '9:00 AM';
+    ? formatTime(new Date(onboarding.notificationTime))
+    : formatTime(new Date(2024, 0, 1, 9, 0));
 
   const handleLogout = useCallback(() => {
     Alert.alert(
-      'Log Out',
-      'Are you sure you want to log out? Your local data will be preserved.',
+      t('Log Out?'),
+      t('Are you sure you want to log out? Your local data will be preserved.'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('Cancel'), style: 'cancel' },
         {
-          text: 'Log Out',
+          text: t('Log Out'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -61,16 +64,18 @@ export default function SettingsScreen() {
         },
       ]
     );
-  }, [clearAuth]);
+  }, [clearAuth, t]);
 
   const handleClearData = useCallback(() => {
     Alert.alert(
-      'Clear All Data',
-      'This will delete all your photos, moods, bucket list items, and activity history. This cannot be undone.',
+      t('Clear All Data'),
+      t(
+        'This will delete all your photos, moods, bucket list items, and activity history. This cannot be undone.'
+      ),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('Cancel'), style: 'cancel' },
         {
-          text: 'Clear Data',
+          text: t('Clear Data'),
           style: 'destructive',
           onPress: () => {
             // Clear all stores
@@ -78,21 +83,23 @@ export default function SettingsScreen() {
             useMoodStore.getState().entries = [];
             useBucketStore.getState().items = [];
             useActivityStore.getState().activities = [];
-            Alert.alert('Data Cleared', 'All your local data has been cleared.');
+            Alert.alert(t('Data Cleared'), t('All your local data has been cleared.'));
           },
         },
       ]
     );
-  }, []);
+  }, [t]);
 
   const handleUnpair = useCallback(() => {
     Alert.alert(
-      'Unpair Partner',
-      'Are you sure? You will lose access to shared Daily Questions until you pair again.',
+      t('Unpair Partner'),
+      t(
+        'Are you sure? You will lose access to shared Daily Questions until you pair again.'
+      ),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('Cancel'), style: 'cancel' },
         {
-          text: 'Unpair',
+          text: t('Unpair'),
           style: 'destructive',
           onPress: () => {
             unpair();
@@ -101,18 +108,44 @@ export default function SettingsScreen() {
         },
       ]
     );
-  }, [unpair]);
+  }, [unpair, t]);
 
   const handleShareInviteCode = useCallback(async () => {
     if (!inviteCode) return;
     try {
       await Share.share({
-        message: `Join me on RightyLove! Use my invite code: ${inviteCode}\n\nDownload: https://rightylove.app`,
+        message: t(
+          'Join me on RightyLove! Use my invite code: {{code}}\n\nDownload: https://rightylove.app',
+          { code: inviteCode }
+        ),
       });
     } catch (error) {
       console.error('Share error:', error);
     }
-  }, [inviteCode]);
+  }, [inviteCode, t]);
+
+  const handleLanguageSelect = useCallback(() => {
+    const options = [
+      { code: 'en', label: languageLabels.en },
+      { code: 'tr', label: languageLabels.tr },
+      { code: 'de', label: languageLabels.de },
+      { code: 'it', label: languageLabels.it },
+      { code: 'fr', label: languageLabels.fr },
+      { code: 'es', label: languageLabels.es },
+    ] as const;
+
+    Alert.alert(
+      t('Language'),
+      t('Choose your language'),
+      [
+        ...options.map((option) => ({
+          text: t(option.label),
+          onPress: () => setLanguage(option.code),
+        })),
+        { text: t('Cancel'), style: 'cancel' },
+      ]
+    );
+  }, [setLanguage, t]);
 
   const handleOpenPrivacy = useCallback(() => {
     Linking.openURL('https://rightylove.app/privacy');
@@ -127,19 +160,19 @@ export default function SettingsScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Settings</Text>
+          <Text style={styles.title}>{t('Settings')}</Text>
         </View>
 
         {/* Account Info */}
         {user && (
           <>
-            <Text style={styles.sectionTitle}>Account</Text>
+            <Text style={styles.sectionTitle}>{t('Account')}</Text>
             <View style={styles.card}>
               <View style={styles.settingRow}>
                 <View style={styles.settingInfo}>
                   <Ionicons name="person-circle" size={24} color="#FF6B9D" />
                   <View style={styles.settingTextContainer}>
-                    <Text style={styles.settingLabel}>Email</Text>
+                    <Text style={styles.settingLabel}>{t('Email')}</Text>
                     <Text style={styles.settingValue}>{user.email}</Text>
                   </View>
                 </View>
@@ -149,7 +182,7 @@ export default function SettingsScreen() {
         )}
 
         {/* Partner Section */}
-        <Text style={styles.sectionTitle}>Partner</Text>
+        <Text style={styles.sectionTitle}>{t('Partner')}</Text>
         <View style={styles.card}>
           {isPaired && couple ? (
             <>
@@ -157,16 +190,16 @@ export default function SettingsScreen() {
                 <View style={styles.settingInfo}>
                   <Ionicons name="heart" size={24} color="#FF6B9D" />
                   <View style={styles.settingTextContainer}>
-                    <Text style={styles.settingLabel}>Connected</Text>
-                    <Text style={styles.settingValue}>Partner linked</Text>
+                    <Text style={styles.settingLabel}>{t('Connected')}</Text>
+                    <Text style={styles.settingValue}>{t('Partner linked')}</Text>
                   </View>
                 </View>
                 <View style={styles.pairedBadge}>
-                  <Text style={styles.pairedBadgeText}>Paired</Text>
+                  <Text style={styles.pairedBadgeText}>{t('Paired')}</Text>
                 </View>
               </View>
               <TouchableOpacity style={styles.textButton} onPress={handleUnpair}>
-                <Text style={styles.textButtonDanger}>Unpair Partner</Text>
+                <Text style={styles.textButtonDanger}>{t('Unpair Partner')}</Text>
               </TouchableOpacity>
             </>
           ) : (
@@ -174,13 +207,13 @@ export default function SettingsScreen() {
               <View style={styles.settingRow}>
                 <View style={styles.settingInfo}>
                   <Ionicons name="heart-outline" size={24} color="#9CA3AF" />
-                  <Text style={styles.settingLabelMuted}>Not paired yet</Text>
+                  <Text style={styles.settingLabelMuted}>{t('Not paired yet')}</Text>
                 </View>
               </View>
               {inviteCode && (
                 <>
                   <View style={styles.inviteCodeSection}>
-                    <Text style={styles.inviteCodeLabel}>Your invite code</Text>
+                    <Text style={styles.inviteCodeLabel}>{t('Your invite code')}</Text>
                     <Text style={styles.inviteCodeValue}>{inviteCode}</Text>
                   </View>
                   <TouchableOpacity
@@ -188,7 +221,7 @@ export default function SettingsScreen() {
                     onPress={handleShareInviteCode}
                   >
                     <Ionicons name="share-outline" size={20} color="#FFFFFF" />
-                    <Text style={styles.primaryButtonText}>Share Invite Code</Text>
+                    <Text style={styles.primaryButtonText}>{t('Share Invite Code')}</Text>
                   </TouchableOpacity>
                 </>
               )}
@@ -196,19 +229,19 @@ export default function SettingsScreen() {
                 style={[styles.primaryButton, styles.secondaryButton]}
                 onPress={() => router.push('/(onboarding)/pair-partner')}
               >
-                <Text style={styles.secondaryButtonText}>Pair with Partner</Text>
+                <Text style={styles.secondaryButtonText}>{t('Pair with Partner')}</Text>
               </TouchableOpacity>
             </>
           )}
         </View>
 
         {/* Notifications Section */}
-        <Text style={styles.sectionTitle}>Notifications</Text>
+        <Text style={styles.sectionTitle}>{t('Notifications')}</Text>
         <View style={styles.card}>
           <View style={styles.settingRow}>
             <View style={styles.settingInfo}>
               <Ionicons name="notifications" size={24} color="#8B5CF6" />
-              <Text style={styles.settingLabel}>Daily Reminders</Text>
+              <Text style={styles.settingLabel}>{t('Daily Reminders')}</Text>
             </View>
             <Switch
               value={notificationsEnabled}
@@ -224,7 +257,7 @@ export default function SettingsScreen() {
             >
               <View style={styles.settingInfo}>
                 <Ionicons name="time" size={24} color="#6B7280" />
-                <Text style={styles.settingLabel}>Reminder Time</Text>
+                <Text style={styles.settingLabel}>{t('Reminder Time')}</Text>
               </View>
               <View style={styles.settingAction}>
                 <Text style={styles.settingActionText}>{notificationTime}</Text>
@@ -235,56 +268,58 @@ export default function SettingsScreen() {
         </View>
 
         {/* App Section */}
-        <Text style={styles.sectionTitle}>App</Text>
+        <Text style={styles.sectionTitle}>{t('App')}</Text>
         <View style={styles.card}>
-          <TouchableOpacity style={styles.settingRow}>
+          <TouchableOpacity style={styles.settingRow} onPress={handleLanguageSelect}>
             <View style={styles.settingInfo}>
               <Ionicons name="globe" size={24} color="#6B7280" />
-              <Text style={styles.settingLabel}>Language</Text>
+              <Text style={styles.settingLabel}>{t('Language')}</Text>
             </View>
             <View style={styles.settingAction}>
-              <Text style={styles.settingActionText}>English</Text>
+              <Text style={styles.settingActionText}>
+                {t(languageLabels[language])}
+              </Text>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </View>
           </TouchableOpacity>
           <TouchableOpacity style={styles.settingRow} onPress={handleOpenPrivacy}>
             <View style={styles.settingInfo}>
               <Ionicons name="shield-checkmark" size={24} color="#6B7280" />
-              <Text style={styles.settingLabel}>Privacy Policy</Text>
+              <Text style={styles.settingLabel}>{t('Privacy Policy')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.settingRow} onPress={handleOpenTerms}>
             <View style={styles.settingInfo}>
               <Ionicons name="document-text" size={24} color="#6B7280" />
-              <Text style={styles.settingLabel}>Terms of Service</Text>
+              <Text style={styles.settingLabel}>{t('Terms of Service')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
           </TouchableOpacity>
         </View>
 
         {/* Danger Zone */}
-        <Text style={styles.sectionTitle}>Danger Zone</Text>
+        <Text style={styles.sectionTitle}>{t('Danger Zone')}</Text>
         <View style={styles.card}>
           <TouchableOpacity style={styles.settingRow} onPress={handleClearData}>
             <View style={styles.settingInfo}>
               <Ionicons name="trash" size={24} color="#EF4444" />
-              <Text style={styles.settingLabelDanger}>Clear Local Data</Text>
+              <Text style={styles.settingLabelDanger}>{t('Clear Local Data')}</Text>
             </View>
           </TouchableOpacity>
           <TouchableOpacity style={styles.settingRow} onPress={handleLogout}>
             <View style={styles.settingInfo}>
               <Ionicons name="log-out" size={24} color="#EF4444" />
-              <Text style={styles.settingLabelDanger}>Log Out</Text>
+              <Text style={styles.settingLabelDanger}>{t('Log Out')}</Text>
             </View>
           </TouchableOpacity>
         </View>
 
         {/* App Info */}
         <View style={styles.appInfo}>
-          <Text style={styles.appName}>RightyLove</Text>
-          <Text style={styles.appVersion}>Version 1.0.0</Text>
-          <Text style={styles.appTagline}>Made with love</Text>
+          <Text style={styles.appName}>{t('RightyLove')}</Text>
+          <Text style={styles.appVersion}>{t('Version 1.0.0')}</Text>
+          <Text style={styles.appTagline}>{t('Made with love')}</Text>
         </View>
 
         <View style={{ height: 24 }} />

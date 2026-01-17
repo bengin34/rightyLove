@@ -11,10 +11,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { storage } from '@/lib/storage';
 import { verifyOtp, sendMagicLink } from '@/services/auth';
 import { useAuthStore } from '@/stores/authStore';
+import { useTranslation } from '@/i18n';
 
 const OTP_LENGTH = 6;
 
 export default function VerifyScreen() {
+  const { t, tError } = useTranslation();
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -46,7 +48,7 @@ export default function VerifyScreen() {
 
   const handleVerify = async () => {
     if (otp.length !== OTP_LENGTH || !pendingEmail) {
-      setError('Please enter the 6-digit code');
+      setError(t('Please enter the 6-digit code'));
       return;
     }
 
@@ -57,7 +59,7 @@ export default function VerifyScreen() {
       const result = await verifyOtp(pendingEmail, otp);
 
       if (!result.success) {
-        setError(result.error || 'Verification failed');
+        setError(tError(result.error, 'Verification failed'));
         setOtp('');
         return;
       }
@@ -70,7 +72,7 @@ export default function VerifyScreen() {
         router.replace('/(onboarding)/relationship-info');
       }
     } catch (err) {
-      setError('Verification failed. Please try again.');
+      setError(t('Verification failed. Please try again.'));
       setOtp('');
     } finally {
       setLoading(false);
@@ -87,13 +89,13 @@ export default function VerifyScreen() {
       const result = await sendMagicLink(pendingEmail);
 
       if (!result.success) {
-        setError(result.error || 'Failed to resend');
+        setError(tError(result.error, 'Failed to resend'));
         return;
       }
 
       setResendCooldown(60);
     } catch (err) {
-      setError('Failed to resend. Please try again.');
+      setError(t('Failed to resend. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -126,7 +128,7 @@ export default function VerifyScreen() {
               marginBottom: 8,
             }}
           >
-            Check your email
+            {t('Check your email')}
           </Text>
           <Text
             style={{
@@ -135,7 +137,7 @@ export default function VerifyScreen() {
               textAlign: 'center',
             }}
           >
-            We sent a 6-digit code to{'\n'}
+            {t('We sent a 6-digit code to')}{'\n'}
             <Text style={{ fontWeight: '600', color: '#FF6B9D' }}>
               {pendingEmail}
             </Text>
@@ -152,7 +154,7 @@ export default function VerifyScreen() {
               setOtp(cleaned);
               setError('');
             }}
-            placeholder="000000"
+            placeholder={t('000000')}
             placeholderTextColor="#CCC"
             keyboardType="number-pad"
             maxLength={OTP_LENGTH}
@@ -199,16 +201,16 @@ export default function VerifyScreen() {
             <ActivityIndicator color="#fff" />
           ) : (
             <Text
-              style={{
-                color: '#fff',
-                fontSize: 16,
-                fontWeight: '600',
-              }}
-            >
-              Verify
-            </Text>
-          )}
-        </TouchableOpacity>
+            style={{
+              color: '#fff',
+              fontSize: 16,
+              fontWeight: '600',
+            }}
+          >
+              {t('Verify')}
+          </Text>
+        )}
+      </TouchableOpacity>
 
         {/* Resend */}
         <TouchableOpacity
@@ -220,16 +222,16 @@ export default function VerifyScreen() {
           }}
         >
           <Text
-            style={{
-              color: resendCooldown > 0 ? '#999' : '#FF6B9D',
-              fontSize: 14,
-            }}
-          >
-            {resendCooldown > 0
-              ? `Resend code in ${resendCooldown}s`
-              : "Didn't receive the code? Resend"}
-          </Text>
-        </TouchableOpacity>
+          style={{
+            color: resendCooldown > 0 ? '#999' : '#FF6B9D',
+            fontSize: 14,
+          }}
+        >
+          {resendCooldown > 0
+            ? t('Resend code in {{count}}s', { count: resendCooldown })
+            : t("Didn't receive the code? Resend")}
+        </Text>
+      </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

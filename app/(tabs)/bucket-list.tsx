@@ -19,14 +19,16 @@ import { useBucketStore } from '@/stores/bucketStore';
 import { useActivityStore } from '@/stores/activityStore';
 import { openWhatsAppWithMessage } from '@/services/sharing';
 import type { BucketCategory, BucketItem } from '@/types';
+import { useTranslation } from '@/i18n';
 
-const CATEGORIES: { key: BucketCategory; label: string; emoji: string }[] = [
-  { key: 'places', label: 'Places', emoji: '🌍' },
-  { key: 'things', label: 'Things to Try', emoji: '✨' },
-  { key: 'movies', label: 'Movies', emoji: '🎬' },
+const CATEGORIES: { key: BucketCategory; labelKey: string; emoji: string }[] = [
+  { key: 'places', labelKey: 'Places', emoji: '🌍' },
+  { key: 'things', labelKey: 'Things to Try', emoji: '✨' },
+  { key: 'movies', labelKey: 'Movies', emoji: '🎬' },
 ];
 
 export default function BucketListScreen() {
+  const { t, tError } = useTranslation();
   const [activeCategory, setActiveCategory] = useState<BucketCategory>('places');
   const [showCompleted, setShowCompleted] = useState(false);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
@@ -58,14 +60,14 @@ export default function BucketListScreen() {
 
   const handleShareItem = useCallback(async (item: BucketItem) => {
     const emoji = CATEGORIES.find(c => c.key === item.category)?.emoji || '';
-    const status = item.completedAt ? 'We did it!' : 'On our bucket list';
+    const status = item.completedAt ? t('We did it!') : t('On our bucket list');
     const message = `${emoji} ${status}: "${item.text}" 💕`;
 
     const result = await openWhatsAppWithMessage(message);
-    if (!result.success && result.error) {
-      Alert.alert('Sharing failed', result.error);
+    if (!result.success) {
+      Alert.alert(t('Sharing failed'), tError(result.error));
     }
-  }, []);
+  }, [t, tError]);
 
   const renderItem = ({ item }: { item: BucketItem }) => {
     const isCompleted = !!item.completedAt;
@@ -95,7 +97,7 @@ export default function BucketListScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Bucket List</Text>
+        <Text style={styles.title}>{t('Bucket List')}</Text>
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => setIsAddModalVisible(true)}
@@ -119,7 +121,7 @@ export default function BucketListScreen() {
                 activeCategory === cat.key && styles.categoryLabelActive,
               ]}
             >
-              {cat.label}
+              {t(cat.labelKey)}
             </Text>
           </TouchableOpacity>
         ))}
@@ -132,7 +134,7 @@ export default function BucketListScreen() {
           onPress={() => setShowCompleted(false)}
         >
           <Text style={[styles.filterText, !showCompleted && styles.filterTextActive]}>
-            Active
+            {t('Active')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -140,7 +142,7 @@ export default function BucketListScreen() {
           onPress={() => setShowCompleted(true)}
         >
           <Text style={[styles.filterText, showCompleted && styles.filterTextActive]}>
-            Completed
+            {t('Completed')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -159,8 +161,8 @@ export default function BucketListScreen() {
             </Text>
             <Text style={styles.emptyText}>
               {showCompleted
-                ? 'No completed items yet'
-                : 'Add your first bucket list item!'}
+                ? t('No completed items yet')
+                : t('Add your first bucket list item!')}
             </Text>
           </View>
         }
@@ -182,7 +184,7 @@ export default function BucketListScreen() {
           </TouchableWithoutFeedback>
           <View style={[styles.modalContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add to Bucket List</Text>
+              <Text style={styles.modalTitle}>{t('Add to Bucket List')}</Text>
               <TouchableOpacity onPress={() => setIsAddModalVisible(false)}>
                 <Ionicons name="close" size={24} color="#6B7280" />
               </TouchableOpacity>
@@ -193,13 +195,13 @@ export default function BucketListScreen() {
                 {CATEGORIES.find((c) => c.key === activeCategory)?.emoji}
               </Text>
               <Text style={styles.modalCategoryLabel}>
-                {CATEGORIES.find((c) => c.key === activeCategory)?.label}
+                {t(CATEGORIES.find((c) => c.key === activeCategory)?.labelKey || '')}
               </Text>
             </View>
 
             <TextInput
               style={styles.modalInput}
-              placeholder="What do you want to do together?"
+              placeholder={t('What do you want to do together?')}
               placeholderTextColor="#9CA3AF"
               value={newItemText}
               onChangeText={setNewItemText}
@@ -212,7 +214,7 @@ export default function BucketListScreen() {
               onPress={handleAddItem}
               disabled={!newItemText.trim()}
             >
-              <Text style={styles.modalAddButtonText}>Add Item</Text>
+              <Text style={styles.modalAddButtonText}>{t('Add Item')}</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

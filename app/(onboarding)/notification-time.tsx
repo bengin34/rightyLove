@@ -3,8 +3,10 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { getLocale, useTranslation } from '@/i18n';
 
 export default function NotificationTimeScreen() {
+  const { t, language } = useTranslation();
   const [time, setTime] = useState(new Date(2024, 0, 1, 9, 0)); // Default 9:00 AM
   const [showPicker, setShowPicker] = useState(Platform.OS === 'ios');
   const iosPickerProps =
@@ -12,19 +14,23 @@ export default function NotificationTimeScreen() {
       ? { textColor: '#111827', themeVariant: 'light' as const }
       : {};
 
-  const presetTimes = [
-    { label: 'Morning', time: '9:00 AM', hour: 9 },
-    { label: 'Afternoon', time: '2:00 PM', hour: 14 },
-    { label: 'Evening', time: '7:00 PM', hour: 19 },
-  ];
-
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
+    return date.toLocaleTimeString(getLocale(language), {
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true,
     });
   };
+
+  const formatPresetTime = (hour: number) => {
+    const presetDate = new Date(2024, 0, 1, hour, 0);
+    return formatTime(presetDate);
+  };
+
+  const presetTimes = [
+    { label: t('Morning'), hour: 9 },
+    { label: t('Afternoon'), hour: 14 },
+    { label: t('Evening'), hour: 19 },
+  ];
 
   const handlePresetSelect = (hour: number) => {
     const newTime = new Date(time);
@@ -49,12 +55,12 @@ export default function NotificationTimeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>When should we remind you?</Text>
+        <Text style={styles.title}>{t('When should we remind you?')}</Text>
         <Text style={styles.subtitle}>
-          We'll send you a gentle nudge at this time each day
+          {t("We'll send you a gentle nudge at this time each day")}
         </Text>
 
-        <Text style={styles.sectionTitle}>Quick presets</Text>
+        <Text style={styles.sectionTitle}>{t('Quick presets')}</Text>
         <View style={styles.presetsRow}>
           {presetTimes.map((preset) => (
             <TouchableOpacity
@@ -72,13 +78,13 @@ export default function NotificationTimeScreen() {
                   time.getHours() === preset.hour && styles.presetTimeSelected,
                 ]}
               >
-                {preset.time}
+                {formatPresetTime(preset.hour)}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>Or pick a custom time</Text>
+        <Text style={styles.sectionTitle}>{t('Or pick a custom time')}</Text>
         <View style={styles.pickerContainer}>
           {Platform.OS === 'android' && (
             <TouchableOpacity
@@ -101,17 +107,17 @@ export default function NotificationTimeScreen() {
         </View>
 
         <View style={styles.selectedTime}>
-          <Text style={styles.selectedTimeLabel}>Daily reminder at</Text>
+          <Text style={styles.selectedTimeLabel}>{t('Daily reminder at')}</Text>
           <Text style={styles.selectedTimeValue}>{formatTime(time)}</Text>
         </View>
       </View>
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-          <Text style={styles.continueButtonText}>Continue</Text>
+          <Text style={styles.continueButtonText}>{t('Continue')}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/(onboarding)/pair-partner')}>
-          <Text style={styles.skipText}>Skip for now</Text>
+          <Text style={styles.skipText}>{t('Skip for now')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

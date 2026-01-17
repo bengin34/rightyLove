@@ -13,6 +13,13 @@ function generateInviteCode(): string {
   return code;
 }
 
+const JOIN_COUPLE_ERRORS = new Set([
+  'Not authenticated',
+  'User already in a couple',
+  'Invalid or already used invite code',
+  'You cannot join your own couple',
+]);
+
 // Create a new couple (initiator)
 export async function createCouple(): Promise<{
   success: boolean;
@@ -37,7 +44,8 @@ export async function createCouple(): Promise<{
       .single();
 
     if (error) {
-      return { success: false, error: error.message };
+      console.error('[createCouple] Error:', error);
+      return { success: false, error: 'Failed to create couple' };
     }
 
     const couple: Couple = {
@@ -73,10 +81,15 @@ export async function joinCouple(
     });
 
     if (error || !data) {
-      return {
-        success: false,
-        error: error?.message || 'Invalid or already used invite code',
-      };
+      const message = error?.message;
+      if (message && JOIN_COUPLE_ERRORS.has(message)) {
+        return { success: false, error: message };
+      }
+      if (!message) {
+        return { success: false, error: 'Invalid or already used invite code' };
+      }
+      console.error('[joinCouple] Error:', error);
+      return { success: false, error: 'Failed to join couple' };
     }
 
     const couple: Couple = {
@@ -161,7 +174,8 @@ export async function unpairCouple(): Promise<{
         .eq('id', couple.id);
 
       if (error) {
-        return { success: false, error: error.message };
+        console.error('[unpairCouple] Error:', error);
+        return { success: false, error: 'Failed to unpair' };
       }
     } else {
       const { error } = await supabase
@@ -170,7 +184,8 @@ export async function unpairCouple(): Promise<{
         .eq('id', couple.id);
 
       if (error) {
-        return { success: false, error: error.message };
+        console.error('[unpairCouple] Error:', error);
+        return { success: false, error: 'Failed to unpair' };
       }
     }
 
@@ -208,7 +223,8 @@ export async function regenerateInviteCode(): Promise<{
       .eq('id', couple.id);
 
     if (error) {
-      return { success: false, error: error.message };
+      console.error('[regenerateInviteCode] Error:', error);
+      return { success: false, error: 'Failed to regenerate code' };
     }
 
     // Update store

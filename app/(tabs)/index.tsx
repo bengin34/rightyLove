@@ -11,22 +11,23 @@ import { usePhotoStore } from '@/stores/photoStore';
 import { getDailyQuestion } from '@/services/dailyQuestion';
 import MoodCheckIn, { MoodDisplay } from '@/components/MoodCheckIn';
 import type { QuestionStatus, DailyResponse } from '@/types';
-
-// Get greeting based on time of day
-const getGreeting = () => {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
-};
+import { useTranslation } from '@/i18n';
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const streak = useActivityStore((state) => state.streak);
   const couple = useCoupleStore((state) => state.couple);
   const todayMood = useMoodStore((state) => state.todayMood);
   const photoCount = usePhotoStore((state) => state.photos.length);
 
   const isPaired = couple?.memberB ? true : false;
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return t('Good morning');
+    if (hour < 17) return t('Good afternoon');
+    return t('Good evening');
+  };
 
   const [refreshing, setRefreshing] = useState(false);
   const [dailyData, setDailyData] = useState<DailyResponse | null>(null);
@@ -81,8 +82,10 @@ export default function HomeScreen() {
             <Text style={styles.greeting}>{getGreeting()}! 💕</Text>
             <Text style={styles.streakText}>
               {streak.currentStreak > 0
-                ? `${streak.currentStreak} day streak • Keep it going!`
-                : 'Start your streak today!'}
+                ? t('{{count}} day streak • Keep it going!', {
+                    count: streak.currentStreak,
+                  })
+                : t('Start your streak today!')}
             </Text>
           </View>
           <TouchableOpacity style={styles.streakBadge}>
@@ -101,7 +104,7 @@ export default function HomeScreen() {
             <View style={styles.cardIcon}>
               <Ionicons name="images" size={24} color="#FF6B9D" />
             </View>
-            <Text style={styles.cardTitle}>Photo Deck</Text>
+            <Text style={styles.cardTitle}>{t('Photo Deck')}</Text>
             {photoCount > 0 && (
               <View style={styles.countBadge}>
                 <Text style={styles.countText}>{photoCount}</Text>
@@ -110,12 +113,12 @@ export default function HomeScreen() {
           </View>
           <Text style={styles.cardDescription}>
             {photoCount > 0
-              ? 'Swipe through your memories together'
-              : 'Add photos to start your "Us" album'}
+              ? t('Swipe through your memories together')
+              : t('Add photos to start your "Us" album')}
           </Text>
           <View style={styles.cardAction}>
             <Text style={styles.cardActionText}>
-              {photoCount > 0 ? 'Start swiping' : 'Add photos'}
+              {photoCount > 0 ? t('Start swiping') : t('Add photos')}
             </Text>
             <Ionicons name="arrow-forward" size={20} color="#FF6B9D" />
           </View>
@@ -124,8 +127,12 @@ export default function HomeScreen() {
         {/* Daily Question Card */}
         <TouchableOpacity
           style={[styles.card, !isPaired && styles.cardDisabled]}
-          onPress={() => isPaired && router.push('/daily-question')}
-          activeOpacity={isPaired ? 0.9 : 1}
+          onPress={() =>
+            isPaired
+              ? router.push('/daily-question')
+              : router.push('/(onboarding)/pair-partner')
+          }
+          activeOpacity={0.9}
         >
           {isPaired && questionStatus !== 'unlocked' && (
             <View style={styles.lockBadge}>
@@ -136,7 +143,7 @@ export default function HomeScreen() {
             <View style={[styles.cardIcon, { backgroundColor: '#EDE9FE' }]}>
               <Ionicons name="chatbubbles" size={24} color="#8B5CF6" />
             </View>
-            <Text style={styles.cardTitle}>Daily Question</Text>
+            <Text style={styles.cardTitle}>{t('Daily Question')}</Text>
             {questionStatus === 'unlocked' && (
               <View style={styles.unlockedBadge}>
                 <Ionicons name="lock-open" size={14} color="#10B981" />
@@ -145,16 +152,16 @@ export default function HomeScreen() {
           </View>
           {!isPaired ? (
             <Text style={styles.cardDescriptionMuted}>
-              Pair with your partner to unlock daily questions
+              {t('Pair with your partner to unlock daily questions')}
             </Text>
           ) : questionStatus === 'not_answered' ? (
             <>
               <Text style={styles.cardDescription}>
-                Answer to unlock today's connection
+                {t("Answer to unlock today's connection")}
               </Text>
               <View style={styles.cardAction}>
                 <Text style={[styles.cardActionText, { color: '#8B5CF6' }]}>
-                  Answer now
+                  {t('Answer now')}
                 </Text>
                 <Ionicons name="arrow-forward" size={20} color="#8B5CF6" />
               </View>
@@ -163,14 +170,14 @@ export default function HomeScreen() {
             <>
               <View style={styles.statusRow}>
                 <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-                <Text style={styles.statusText}>You answered</Text>
+                <Text style={styles.statusText}>{t('You answered')}</Text>
               </View>
               <Text style={styles.cardDescription}>
-                Waiting for your partner to unlock...
+                {t('Waiting for your partner to unlock...')}
               </Text>
               <View style={styles.cardAction}>
                 <Text style={[styles.cardActionText, { color: '#8B5CF6' }]}>
-                  Send a nudge
+                  {t('Send a nudge')}
                 </Text>
                 <Ionicons name="notifications" size={20} color="#8B5CF6" />
               </View>
@@ -178,18 +185,18 @@ export default function HomeScreen() {
           ) : questionStatus === 'unlocked' ? (
             <>
               <Text style={styles.cardDescription}>
-                Both answered! See what you said 💕
+                {t('Both answered! See what you said 💕')}
               </Text>
               <View style={styles.cardAction}>
                 <Text style={[styles.cardActionText, { color: '#10B981' }]}>
-                  View answers
+                  {t('View answers')}
                 </Text>
                 <Ionicons name="arrow-forward" size={20} color="#10B981" />
               </View>
             </>
           ) : (
             <Text style={styles.cardDescriptionMuted}>
-              Not unlocked today. Try again tomorrow!
+              {t('Not unlocked today. Try again tomorrow!')}
             </Text>
           )}
         </TouchableOpacity>
@@ -204,20 +211,20 @@ export default function HomeScreen() {
             <View style={[styles.cardIcon, { backgroundColor: '#FEF3C7' }]}>
               <Ionicons name="happy" size={24} color="#F59E0B" />
             </View>
-            <Text style={styles.cardTitle}>Today's Mood</Text>
+            <Text style={styles.cardTitle}>{t("Today's Mood")}</Text>
           </View>
 
           {todayMood ? (
             <View style={styles.moodCompleted}>
               <MoodDisplay />
               <Text style={styles.moodCompletedText}>
-                Tap to change or share with your partner
+                {t('Tap to change or share with your partner')}
               </Text>
             </View>
           ) : (
             <>
               <Text style={styles.cardDescription}>
-                How are you feeling today?
+                {t('How are you feeling today?')}
               </Text>
               <View style={styles.moodPreview}>
                 {['🙂', '😐', '😞', '😠', '😴'].map((emoji) => (
@@ -228,7 +235,7 @@ export default function HomeScreen() {
               </View>
               <View style={styles.cardAction}>
                 <Text style={[styles.cardActionText, { color: '#F59E0B' }]}>
-                  Check in
+                  {t('Check in')}
                 </Text>
                 <Ionicons name="arrow-forward" size={20} color="#F59E0B" />
               </View>
@@ -241,24 +248,24 @@ export default function HomeScreen() {
           <View style={styles.streakCard}>
             <View style={styles.streakCardHeader}>
               <Ionicons name="flame" size={24} color="#FF6B9D" />
-              <Text style={styles.streakCardTitle}>Your Streaks</Text>
+              <Text style={styles.streakCardTitle}>{t('Your Streaks')}</Text>
             </View>
             <View style={styles.streakStats}>
               <View style={styles.streakStat}>
                 <Text style={styles.streakStatValue}>{streak.currentStreak}</Text>
-                <Text style={styles.streakStatLabel}>Current</Text>
+                <Text style={styles.streakStatLabel}>{t('Current')}</Text>
               </View>
               <View style={styles.streakDivider} />
               <View style={styles.streakStat}>
                 <Text style={styles.streakStatValue}>{streak.longestStreak}</Text>
-                <Text style={styles.streakStatLabel}>Longest</Text>
+                <Text style={styles.streakStatLabel}>{t('Longest')}</Text>
               </View>
               <View style={styles.streakDivider} />
               <View style={styles.streakStat}>
                 <Text style={styles.streakStatValue}>
                   {streak.activeDaysThisWeek}/7
                 </Text>
-                <Text style={styles.streakStatLabel}>This week</Text>
+                <Text style={styles.streakStatLabel}>{t('This week')}</Text>
               </View>
               {streak.coupleUnlockStreak !== undefined && streak.coupleUnlockStreak > 0 && (
                 <>
@@ -267,7 +274,7 @@ export default function HomeScreen() {
                     <Text style={[styles.streakStatValue, { color: '#8B5CF6' }]}>
                       {streak.coupleUnlockStreak}
                     </Text>
-                    <Text style={styles.streakStatLabel}>Unlocks</Text>
+                    <Text style={styles.streakStatLabel}>{t('Unlocks')}</Text>
                   </View>
                 </>
               )}
