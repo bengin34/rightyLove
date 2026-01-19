@@ -7,7 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth, useAnniversaryReminders } from '@/hooks';
 import 'react-native-url-polyfill/auto';
 
 import '../global.css';
@@ -27,6 +27,7 @@ const queryClient = new QueryClient({
 
 export default function RootLayout() {
   useAuth();
+  useAnniversaryReminders();
   const router = useRouter();
 
   useEffect(() => {
@@ -108,6 +109,13 @@ export default function RootLayout() {
               name="daily-question"
               options={{
                 presentation: 'modal',
+                animation: 'slide_from_bottom',
+              }}
+            />
+            <Stack.Screen
+              name="widgets-picker"
+              options={{
+                presentation: 'fullScreenModal',
                 animation: 'slide_from_bottom',
               }}
             />

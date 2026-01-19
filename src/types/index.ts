@@ -45,8 +45,24 @@ export type RelationshipDuration = '<1' | '1-3' | '3-5' | '5+';
 export interface OnboardingData {
   relationshipType: RelationshipType | null;
   duration: RelationshipDuration | null;
+  relationshipStartDate: Date | null;
   notificationTime: Date | null;
   isComplete: boolean;
+}
+
+// ============================================
+// Anniversary Types
+// ============================================
+
+export interface AnniversaryReminder {
+  id: string;
+  type: 'month' | 'week' | 'day';
+  daysBeforeAnniversary: number;
+  enabled: boolean;
+}
+
+export interface AnniversarySettings {
+  reminders: AnniversaryReminder[];
 }
 
 // ============================================
@@ -203,4 +219,52 @@ export interface AppSettings {
   language: 'en' | 'tr' | 'de' | 'it' | 'fr' | 'es'; // Expandable
   notifications: NotificationSettings;
   theme: 'light' | 'dark' | 'system';
+}
+
+// ============================================
+// Archive Timeline Types
+// ============================================
+
+export type ArchiveViewMode = 'default' | 'timeline';
+export type ArchiveTabMode = 'loveStats' | 'favouriteMoments';
+
+export type TimelineItemKind = 'image' | 'pill';
+
+export interface TimelineItem {
+  id: string;
+  kind: TimelineItemKind;
+  date: Date;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  emoji?: string;
+  commentCount?: number;
+  mediaCount?: number;
+  relativeLabel?: string;
+}
+
+export interface ArchiveItem {
+  id: string;
+  type: 'moment' | 'milestone';
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  emoji?: string;
+  createdAt: Date;
+  commentCount?: number;
+  mediaCount?: number;
+}
+
+// ============================================
+// Favourite Moments Types
+// ============================================
+
+export interface FavouriteMoment {
+  id: string;
+  photoUri: string;
+  date: Date;
+  title: string;
+  description?: string;
+  isSpecialEvent: boolean;
+  createdAt: Date;
 }

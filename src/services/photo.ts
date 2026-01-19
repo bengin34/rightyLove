@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { File, Directory, Paths } from 'expo-file-system';
+import { InteractionManager } from 'react-native';
 import { usePhotoStore } from '@/stores/photoStore';
 import { useActivityStore } from '@/stores/activityStore';
 import type { Photo } from '@/types';
@@ -42,7 +43,49 @@ export async function requestMediaLibraryPermission(): Promise<boolean> {
 }
 
 // Pick multiple images from library
-export async function pickImagesFromLibrary(): Promise<{
+type PickImagesOptions = {
+  onProcessingStart?: () => void;
+  onProcessingEnd?: () => void;
+  onProgress?: (current: number, total: number) => void;
+};
+
+// Helper to truly yield to UI thread
+// Uses requestAnimationFrame + setTimeout to ensure UI renders
+function waitForUI(): Promise<void> {
+  return new Promise((resolve) => {
+    // First, wait for next frame
+    requestAnimationFrame(() => {
+      // Then use InteractionManager as a backup
+      InteractionManager.runAfterInteractions(() => {
+        resolve();
+      });
+    });
+  });
+}
+
+// Process a single photo copy - wrapped to allow yielding between copies
+function processSinglePhoto(
+  asset: ImagePicker.ImagePickerAsset,
+  photosDir: Directory
+): Photo {
+  const id = generateId();
+  const fileExtension = asset.uri.split('.').pop() || 'jpg';
+  const fileName = `${id}.${fileExtension}`;
+
+  const sourceFile = new File(asset.uri);
+  const destFile = new File(photosDir, fileName);
+  sourceFile.copy(destFile);
+
+  return {
+    id,
+    localUri: destFile.uri,
+    createdAt: new Date(),
+  };
+}
+
+export async function pickImagesFromLibrary(
+  options: PickImagesOptions = {}
+): Promise<{
   success: boolean;
   photos?: Photo[];
   error?: string;
@@ -58,10 +101,10 @@ export async function pickImagesFromLibrary(): Promise<{
 
     console.log('[pickImagesFromLibrary] Launching image picker...');
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsMultipleSelection: true,
       quality: 0.8,
-      selectionLimit: 0, // 0 means unlimited selection
+      selectionLimit: 0,
     });
     console.log('[pickImagesFromLibrary] Picker result:', result.canceled, result.assets?.length);
 
@@ -69,34 +112,48 @@ export async function pickImagesFromLibrary(): Promise<{
       return { success: false, error: 'No images selected' };
     }
 
+    const assets = result.assets;
+    const assetCount = assets.length;
+
+    // Show loading screen FIRST, then wait for it to render
+    if (options.onProcessingStart) {
+      console.log('[pickImagesFromLibrary] Triggering loading screen...');
+      options.onProcessingStart();
+    }
+
+    // Wait for the modal to actually render before starting heavy work
+    // InteractionManager ensures animations complete
+    console.log('[pickImagesFromLibrary] Waiting for UI to render...');
+    await waitForUI();
+    // Additional delay to ensure modal animation completes (Modal needs time to animate in)
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    console.log('[pickImagesFromLibrary] UI should be ready, starting processing...');
+
     console.log('[pickImagesFromLibrary] Ensuring photos directory...');
     ensurePhotosDir();
 
     const photos: Photo[] = [];
-
     const photosDir = getPhotosDirectory();
     console.log('[pickImagesFromLibrary] Photos dir URI:', photosDir.uri);
 
-    for (const asset of result.assets) {
-      console.log('[pickImagesFromLibrary] Processing asset:', asset.uri);
-      const id = generateId();
-      const fileExtension = asset.uri.split('.').pop() || 'jpg';
-      const fileName = `${id}.${fileExtension}`;
+    // Process photos in small batches with real yielding between batches
+    const BATCH_SIZE = 5;
 
-      // Copy image to app's document directory for persistence
-      const sourceFile = new File(asset.uri);
-      const destFile = new File(photosDir, fileName);
-      console.log('[pickImagesFromLibrary] Copying from', sourceFile.uri, 'to', destFile.uri);
-      sourceFile.copy(destFile);
-      console.log('[pickImagesFromLibrary] Copy complete');
+    for (let i = 0; i < assetCount; i++) {
+      const asset = assets[i];
+      console.log('[pickImagesFromLibrary] Processing asset:', i + 1, '/', assetCount);
 
-      const photo: Photo = {
-        id,
-        localUri: destFile.uri,
-        createdAt: new Date(),
-      };
-
+      const photo = processSinglePhoto(asset, photosDir);
       photos.push(photo);
+
+      // Report progress
+      options.onProgress?.(i + 1, assetCount);
+
+      // Yield to UI after each batch to allow animations and updates
+      if ((i + 1) % BATCH_SIZE === 0) {
+        // Use setTimeout with actual delay to give UI thread time
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
     }
 
     // Add photos to store
@@ -108,6 +165,8 @@ export async function pickImagesFromLibrary(): Promise<{
   } catch (err) {
     console.error('[pickImagesFromLibrary] Error:', err);
     return { success: false, error: 'Failed to pick images' };
+  } finally {
+    options.onProcessingEnd?.();
   }
 }
 

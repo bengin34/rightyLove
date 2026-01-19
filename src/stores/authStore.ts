@@ -20,6 +20,7 @@ interface AuthStore {
   // Onboarding actions
   setRelationshipType: (type: RelationshipType) => void;
   setDuration: (duration: RelationshipDuration) => void;
+  setRelationshipStartDate: (date: Date) => void;
   setNotificationTime: (time: Date) => void;
   completeOnboarding: () => void;
 }
@@ -27,6 +28,7 @@ interface AuthStore {
 const initialOnboarding: OnboardingData = {
   relationshipType: null,
   duration: null,
+  relationshipStartDate: null,
   notificationTime: null,
   isComplete: false,
 };
@@ -66,6 +68,11 @@ export const useAuthStore = create<AuthStore>()(
       setDuration: (duration) =>
         set((state) => ({
           onboarding: { ...state.onboarding, duration },
+        })),
+
+      setRelationshipStartDate: (relationshipStartDate) =>
+        set((state) => ({
+          onboarding: { ...state.onboarding, relationshipStartDate },
         })),
 
       setNotificationTime: (notificationTime) =>

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,6 +7,8 @@ import { useMoodStore } from '@/stores/moodStore';
 import { usePhotoStore } from '@/stores/photoStore';
 import { useBucketStore } from '@/stores/bucketStore';
 import { getLocale, useTranslation } from '@/i18n';
+import { ArchiveViewToggle, ArchiveTimelineView, ArchiveTabToggle, FavouriteMomentsView } from '@/components/archive';
+import type { ArchiveViewMode, ArchiveTabMode, TimelineItem, FavouriteMoment } from '@/types';
 
 const formatWeekDate = (dateString: string, locale: string): string => {
   const date = new Date(dateString);
@@ -15,6 +17,21 @@ const formatWeekDate = (dateString: string, locale: string): string => {
 
 export default function ArchiveScreen() {
   const { t, language } = useTranslation();
+  const [activeTab, setActiveTab] = useState<ArchiveTabMode>('loveStats');
+  const [viewMode, setViewMode] = useState<ArchiveViewMode>('default');
+
+  // Local state for favourite moments (will be moved to store later)
+  const [favouriteMoments, setFavouriteMoments] = useState<FavouriteMoment[]>([]);
+
+  const handleAddMoment = useCallback((momentData: Omit<FavouriteMoment, 'id' | 'createdAt'>) => {
+    const newMoment: FavouriteMoment = {
+      ...momentData,
+      id: `moment_${Date.now()}`,
+      createdAt: new Date(),
+    };
+    setFavouriteMoments((prev) => [newMoment, ...prev]);
+  }, []);
+
   // Get data from stores
   const { streak, getWeeklyRecap } = useActivityStore();
   const { getWeekMoods } = useMoodStore();
@@ -57,17 +74,63 @@ export default function ArchiveScreen() {
     }
   };
 
+  const handleTimelineItemPress = useCallback((item: TimelineItem) => {
+    // Navigate to detail screen - can be extended to navigate to existing detail screens
+    console.log('Timeline item pressed:', item.id);
+  }, []);
+
+  // Favourite Moments tab
+  if (activeTab === 'favouriteMoments') {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        {/* Tab Toggle */}
+        <View style={styles.tabContainer}>
+          <ArchiveTabToggle tab={activeTab} onTabChange={setActiveTab} />
+        </View>
+        <FavouriteMomentsView moments={favouriteMoments} onAddMoment={handleAddMoment} />
+      </SafeAreaView>
+    );
+  }
+
+  // Timeline view (within Love Stats tab)
+  if (viewMode === 'timeline') {
+    return (
+      <SafeAreaView style={styles.timelineContainer} edges={['top']}>
+        <View style={styles.tabContainer}>
+          <ArchiveTabToggle tab={activeTab} onTabChange={setActiveTab} />
+        </View>
+        <View style={styles.timelineHeader}>
+          <ArchiveViewToggle mode={viewMode} onModeChange={setViewMode} />
+        </View>
+        <ArchiveTimelineView onItemPress={handleTimelineItemPress} />
+      </SafeAreaView>
+    );
+  }
+
+  // Default Love Stats view
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
+        {/* Tab Toggle */}
+        <View style={styles.tabContainerInScroll}>
+          <ArchiveTabToggle tab={activeTab} onTabChange={setActiveTab} />
+        </View>
+
+        {/* Header with View Toggle */}
         <View style={styles.header}>
-          <Text style={styles.title}>{t('Your Archive')}</Text>
-          <Text style={styles.subtitle}>
-            {t('Week of {{date}}', {
-              date: formatWeekDate(currentWeekRecap.weekStartDate, getLocale(language)),
-            })}
-          </Text>
+          <View style={styles.headerTitleRow}>
+            <View>
+              <Text style={styles.title}>{t('Your Archive')}</Text>
+              <Text style={styles.subtitle}>
+                {t('Week of {{date}}', {
+                  date: formatWeekDate(currentWeekRecap.weekStartDate, getLocale(language)),
+                })}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.toggleContainer}>
+            <ArchiveViewToggle mode={viewMode} onModeChange={setViewMode} />
+          </View>
         </View>
 
         {/* Streak Card */}
@@ -178,12 +241,39 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF5F7',
   },
+  timelineContainer: {
+    flex: 1,
+    backgroundColor: '#0B0B0D',
+  },
+  tabContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  tabContainerInScroll: {
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  timelineHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#0B0B0D',
+  },
   scrollView: {
     flex: 1,
     paddingHorizontal: 16,
   },
   header: {
-    paddingVertical: 20,
+    paddingVertical: 16,
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  toggleContainer: {
+    alignSelf: 'flex-start',
   },
   title: {
     fontSize: 28,

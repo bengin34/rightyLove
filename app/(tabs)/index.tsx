@@ -10,6 +10,7 @@ import { useMoodStore } from '@/stores/moodStore';
 import { usePhotoStore } from '@/stores/photoStore';
 import { getDailyQuestion } from '@/services/dailyQuestion';
 import MoodCheckIn, { MoodDisplay } from '@/components/MoodCheckIn';
+import AnniversaryCard from '@/components/AnniversaryCard';
 import type { QuestionStatus, DailyResponse } from '@/types';
 import { useTranslation } from '@/i18n';
 
@@ -242,6 +243,9 @@ export default function HomeScreen() {
             </>
           )}
         </TouchableOpacity>
+
+        {/* Anniversary Card */}
+        <AnniversaryCard />
 
         {/* Streak Summary Card */}
         {streak.currentStreak > 0 && (

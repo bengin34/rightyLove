@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,12 @@ import {
   Switch,
   Alert,
   Share,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuthStore } from '@/stores/authStore';
 import { useCoupleStore } from '@/stores/coupleStore';
 import { usePhotoStore } from '@/stores/photoStore';
@@ -21,13 +23,41 @@ import { useActivityStore } from '@/stores/activityStore';
 import { signOut } from '@/services/auth';
 import * as Linking from 'expo-linking';
 import { getLocale, useTranslation, languageLabels } from '@/i18n';
+import { calculateDuration, formatDurationSimple, getNextAnniversary } from '@/utils/anniversary';
 
 export default function SettingsScreen() {
   const { t, language, setLanguage } = useTranslation();
-  const { user, onboarding, logout: clearAuth } = useAuthStore();
+  const { user, onboarding, logout: clearAuth, setRelationshipStartDate } = useAuthStore();
   const { couple, isPaired, inviteCode, unpair } = useCoupleStore();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Anniversary calculations
+  const anniversaryInfo = useMemo(() => {
+    if (!onboarding.relationshipStartDate) return null;
+    const startDate = new Date(onboarding.relationshipStartDate);
+    const duration = calculateDuration(startDate);
+    const nextAnniversary = getNextAnniversary(startDate);
+    return { startDate, duration, nextAnniversary };
+  }, [onboarding.relationshipStartDate]);
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString(getLocale(language), {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (selectedDate) {
+      setRelationshipStartDate(selectedDate);
+    }
+  };
 
   // Format notification time
   const formatTime = (date: Date) =>
@@ -235,6 +265,109 @@ export default function SettingsScreen() {
           )}
         </View>
 
+        {/* Anniversary Section */}
+        <Text style={styles.sectionTitle}>{t('Anniversary')}</Text>
+        <View style={styles.card}>
+          {anniversaryInfo ? (
+            <>
+              <View style={styles.anniversaryHeader}>
+                <View style={styles.anniversaryDurationContainer}>
+                  <Text style={styles.anniversaryDurationLabel}>{t('Together for')}</Text>
+                  <Text style={styles.anniversaryDuration}>
+                    {formatDurationSimple(anniversaryInfo.duration)}
+                  </Text>
+                </View>
+                <View style={styles.anniversaryHeartContainer}>
+                  <Text style={styles.anniversaryHeart}>💕</Text>
+                  <Text style={styles.anniversaryDays}>
+                    {anniversaryInfo.duration.totalDays} {t('days')}
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.settingRow}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <View style={styles.settingInfo}>
+                  <Ionicons name="calendar" size={24} color="#FF6B9D" />
+                  <View style={styles.settingTextContainer}>
+                    <Text style={styles.settingLabel}>{t('Anniversary Date')}</Text>
+                    <Text style={styles.settingValue}>
+                      {formatDate(anniversaryInfo.startDate)}
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+
+              {anniversaryInfo.nextAnniversary.daysUntil > 0 && (
+                <View style={styles.settingRow}>
+                  <View style={styles.settingInfo}>
+                    <Ionicons name="gift" size={24} color="#8B5CF6" />
+                    <View style={styles.settingTextContainer}>
+                      <Text style={styles.settingLabel}>{t('Next Anniversary')}</Text>
+                      <Text style={styles.settingValue}>
+                        {anniversaryInfo.nextAnniversary.daysUntil === 1
+                          ? t('Tomorrow!')
+                          : t('In {{count}} days', { count: anniversaryInfo.nextAnniversary.daysUntil })}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.anniversaryYearBadge}>
+                    <Text style={styles.anniversaryYearText}>
+                      {anniversaryInfo.nextAnniversary.yearsCompleted} {t('years')}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {anniversaryInfo.nextAnniversary.isToday && (
+                <View style={styles.anniversaryTodayBanner}>
+                  <Text style={styles.anniversaryTodayEmoji}>🎉</Text>
+                  <Text style={styles.anniversaryTodayText}>
+                    {t('Happy Anniversary!')}
+                  </Text>
+                </View>
+              )}
+            </>
+          ) : (
+            <>
+              <View style={styles.settingRow}>
+                <View style={styles.settingInfo}>
+                  <Ionicons name="calendar-outline" size={24} color="#9CA3AF" />
+                  <Text style={styles.settingLabelMuted}>{t('No anniversary date set')}</Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Ionicons name="add" size={20} color="#FFFFFF" />
+                <Text style={styles.primaryButtonText}>{t('Set Anniversary Date')}</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+
+        {/* Widgets Section */}
+        <Text style={styles.sectionTitle}>{t('Widgets')}</Text>
+        <View style={styles.card}>
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() => router.push('/widgets-picker')}
+          >
+            <View style={styles.settingInfo}>
+              <Ionicons name="grid" size={24} color="#8B5CF6" />
+              <View style={styles.settingTextContainer}>
+                <Text style={styles.settingLabel}>{t('Home Screen Widgets')}</Text>
+                <Text style={styles.settingValue}>{t('Add widgets to your home screen')}</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          </TouchableOpacity>
+        </View>
+
         {/* Notifications Section */}
         <Text style={styles.sectionTitle}>{t('Notifications')}</Text>
         <View style={styles.card}>
@@ -324,6 +457,43 @@ export default function SettingsScreen() {
 
         <View style={{ height: 24 }} />
       </ScrollView>
+
+      {showDatePicker && Platform.OS === 'android' && (
+        <DateTimePicker
+          value={anniversaryInfo?.startDate || new Date()}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+          maximumDate={new Date()}
+        />
+      )}
+
+      {showDatePicker && Platform.OS === 'ios' && (
+        <View style={styles.datePickerModal}>
+          <TouchableOpacity
+            style={styles.datePickerOverlay}
+            activeOpacity={1}
+            onPress={() => setShowDatePicker(false)}
+          />
+          <View style={styles.datePickerContainer}>
+            <View style={styles.datePickerHeader}>
+              <Text style={styles.datePickerTitle}>{t('Select Anniversary Date')}</Text>
+              <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                <Text style={styles.datePickerDone}>{t('Done')}</Text>
+              </TouchableOpacity>
+            </View>
+            <DateTimePicker
+              value={anniversaryInfo?.startDate || new Date()}
+              mode="date"
+              display="inline"
+              onChange={handleDateChange}
+              maximumDate={new Date()}
+              style={styles.datePicker}
+              themeVariant="light"
+            />
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -482,5 +652,114 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#D1D5DB',
     marginTop: 8,
+  },
+  // Anniversary styles
+  anniversaryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  anniversaryDurationContainer: {
+    flex: 1,
+  },
+  anniversaryDurationLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  anniversaryDuration: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  anniversaryHeartContainer: {
+    alignItems: 'center',
+    backgroundColor: '#FFF0F3',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  anniversaryHeart: {
+    fontSize: 24,
+    marginBottom: 2,
+  },
+  anniversaryDays: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FF6B9D',
+  },
+  anniversaryYearBadge: {
+    backgroundColor: '#EDE9FE',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  anniversaryYearText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#8B5CF6',
+  },
+  anniversaryTodayBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#FFF0F3',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  anniversaryTodayEmoji: {
+    fontSize: 24,
+  },
+  anniversaryTodayText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FF6B9D',
+  },
+  // Date picker modal styles
+  datePickerModal: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+    zIndex: 1000,
+  },
+  datePickerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  datePickerContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 40,
+    alignItems: 'center',
+  },
+  datePickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  datePickerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  datePickerDone: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FF6B9D',
+  },
+  datePicker: {
+    height: 350,
+    justifyContent: 'center',
+    alignSelf: 'center',
+    backgroundColor: '#FFFFFF',
   },
 });

@@ -21,6 +21,9 @@ import Animated, {
   withSequence,
   runOnJS,
   interpolate,
+  Easing,
+  withRepeat,
+  cancelAnimation,
 } from 'react-native-reanimated';
 
 import { usePhotoStore } from '@/stores/photoStore';
@@ -36,9 +39,11 @@ import {
 import type { Photo } from '@/types';
 import { useTranslation } from '@/i18n';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 48;
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
+const HEART_BASE_SIZE = 120;
+const HEART_TARGET_SCALE = (Math.max(SCREEN_WIDTH, SCREEN_HEIGHT) / HEART_BASE_SIZE) * 1.6;
 
 export default function PhotoDeckScreen() {
   const { t, tError } = useTranslation();
@@ -53,12 +58,16 @@ export default function PhotoDeckScreen() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showCopiedFeedback, setShowCopiedFeedback] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState({ current: 0, total: 0 });
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const rotation = useSharedValue(0);
   const heartScale = useSharedValue(0);
   const leftSwipeMessageOpacity = useSharedValue(0);
+  const loadingHeartScale = useSharedValue(0);
+  const loadingHeartOpacity = useSharedValue(0);
 
   const lastIdsKeyRef = useRef('');
 
@@ -92,12 +101,61 @@ export default function PhotoDeckScreen() {
     }
   }, [deckPhotos.length, currentIndex]);
 
-  const handleAddPhotos = useCallback(async () => {
-    setIsLoading(true);
-    const result = await pickImagesFromLibrary();
-    setIsLoading(false);
+  useEffect(() => {
+    if (isLoading) {
+      setShowLoadingOverlay(true);
+      loadingHeartScale.value = 0.6;
+      loadingHeartOpacity.value = 0;
+      loadingHeartOpacity.value = withTiming(1, { duration: 200 });
+      loadingHeartScale.value = withRepeat(
+        withSequence(
+          withTiming(0.9, { duration: 500, easing: Easing.out(Easing.quad) }),
+          withTiming(0.65, { duration: 500, easing: Easing.out(Easing.quad) })
+        ),
+        -1,
+        false
+      );
+      return;
+    }
 
-    if (!result.success) {
+    if (!showLoadingOverlay) return;
+
+    cancelAnimation(loadingHeartScale);
+    loadingHeartScale.value = withTiming(
+      HEART_TARGET_SCALE,
+      { duration: 600, easing: Easing.out(Easing.cubic) },
+      () => {
+        loadingHeartOpacity.value = withTiming(0, { duration: 150 }, () => {
+          runOnJS(setShowLoadingOverlay)(false);
+        });
+      }
+    );
+  }, [
+    isLoading,
+    showLoadingOverlay,
+    loadingHeartScale,
+    loadingHeartOpacity,
+  ]);
+
+  const loadingHeartStyle = useAnimatedStyle(() => ({
+    opacity: loadingHeartOpacity.value,
+    transform: [{ scale: loadingHeartScale.value }],
+  }));
+
+  const handleAddPhotos = useCallback(async () => {
+    const result = await pickImagesFromLibrary({
+      onProcessingStart: () => {
+        setLoadingProgress({ current: 0, total: 0 });
+        setShowLoadingOverlay(true);
+        setIsLoading(true);
+      },
+      onProcessingEnd: () => setIsLoading(false),
+      onProgress: (current, total) => {
+        setLoadingProgress({ current, total });
+      },
+    });
+
+    if (!result.success && result.error !== 'No images selected') {
       Alert.alert(t('Error'), tError(result.error));
     }
   }, [t, tError]);
@@ -117,12 +175,14 @@ export default function PhotoDeckScreen() {
     );
     setTimeout(() => setShowHeart(false), 800);
 
-    // Move to next card
+    // Reset position immediately (before index change) so next card starts fresh
+    translateX.value = 0;
+    translateY.value = 0;
+    rotation.value = 0;
+
+    // Move to next card after animation
     setTimeout(() => {
       setCurrentIndex((prev) => prev + 1);
-      translateX.value = 0;
-      translateY.value = 0;
-      rotation.value = 0;
     }, 300);
   }, [currentIndex, deckPhotos, heartScale, translateX, translateY, rotation]);
 
@@ -466,6 +526,25 @@ export default function PhotoDeckScreen() {
         )}
       </View>
 
+      <Modal visible={showLoadingOverlay} transparent animationType="fade">
+        <View style={styles.loadingOverlay}>
+          <Animated.View style={[styles.loadingHeart, loadingHeartStyle]}>
+            <Ionicons name="heart" size={HEART_BASE_SIZE} color="#FF6B9D" />
+          </Animated.View>
+          <View style={styles.loadingTextWrap}>
+            <Text style={styles.loadingTitle}>{t('Adding your photos...')}</Text>
+            {loadingProgress.total > 0 && isLoading && (
+              <Text style={styles.loadingProgress}>
+                {loadingProgress.current} / {loadingProgress.total}
+              </Text>
+            )}
+            <Text style={styles.loadingSubtitle}>
+              {t('This may take a moment for large albums.')}
+            </Text>
+          </View>
+        </View>
+      </Modal>
+
       {/* Instructions */}
       {!hasNoPhotos && !isDeckEmpty && (
         <View style={styles.instructions}>
@@ -746,6 +825,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  loadingOverlay: {
+    flex: 1,
+    backgroundColor: '#FFF5F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingHeart: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingTextWrap: {
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  loadingTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  loadingProgress: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FF6B9D',
+    marginBottom: 8,
+  },
+  loadingSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   instructions: {
     flexDirection: 'row',
